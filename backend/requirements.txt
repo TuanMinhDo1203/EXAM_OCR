@@ -1,0 +1,12 @@
+fastapi==0.116.1
+httpx==0.28.1
+numpy
+pillow
+pydantic-settings==2.10.1
+python-multipart==0.0.20
+scikit-learn
+torch
+torchvision
+transformers
+ultralytics
+uvicorn[standard]==0.35.0

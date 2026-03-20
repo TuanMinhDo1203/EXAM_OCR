@@ -1,0 +1,5 @@
+# .env
+# backend/runtime/
+**/__pycache__/
+*.pyc
+backend/models

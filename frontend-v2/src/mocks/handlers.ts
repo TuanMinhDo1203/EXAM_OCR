@@ -34,6 +34,46 @@ export async function getMockResponse<T>(
     } as unknown as T;
   }
 
+  if (method === 'GET' && path.startsWith('/api/exams')) {
+    return {
+      data: [
+        {
+          id: "exam_001",
+          class_id: "cls_001",
+          title: "Advanced Calculus II",
+          subject: "Mathematics",
+          time_limit_minutes: 45,
+          qr_code_url: "https://api.qrserver.com/v1/create-qr-code/?data=exam_001",
+          qr_token: "MTH402-2026",
+          status: "active",
+          total_submissions: 48,
+          total_expected: 50,
+          avg_confidence: 0.982,
+          avg_score: 76.2,
+          created_at: "2026-10-24T08:00:00Z",
+          closed_at: null
+        },
+        {
+          id: "exam_002",
+          class_id: "cls_002",
+          title: "Introductory Physics",
+          subject: "Physics",
+          time_limit_minutes: 30,
+          qr_code_url: "https://api.qrserver.com/v1/create-qr-code/?data=exam_002",
+          qr_token: "PHY101-2026",
+          status: "closed",
+          total_submissions: 120,
+          total_expected: 120,
+          avg_confidence: 0.62,
+          avg_score: 64.5,
+          created_at: "2026-10-22T08:00:00Z",
+          closed_at: "2026-10-23T08:00:00Z"
+        }
+      ],
+      total: 2
+    } as unknown as T;
+  }
+
   // Fallback
   throw new Error(`Mock not implemented for ${method} ${path}`);
 }

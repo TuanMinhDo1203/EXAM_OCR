@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "error-dim": "#5c1202",
+              "tertiary-container": "#fec38c",
+              "on-tertiary-container": "#633d11",
+              "on-primary-fixed": "#251fbc",
+              "on-tertiary": "#ffffff",
+              "inverse-on-surface": "#9f9d98",
+              "tertiary-fixed": "#fec38c",
+              "tertiary-fixed-dim": "#efb67f",
+              "on-secondary": "#ffffff",
+              "secondary": "#4e6b53",
+              "inverse-surface": "#0e0e0b",
+              "on-background": "#38382f",
+              "surface": "#F2EFE9",
+              "outline": "#818176",
+              "tertiary-dim": "#794f22",
+              "surface-bright": "#fcffdc",
+              "secondary-dim": "#435f48",
+              "on-secondary-fixed": "#2a4530",
+              "on-secondary-fixed-variant": "#46624b",
+              "on-tertiary-fixed": "#4d2a00",
+              "on-primary": "#faf6ff",
+              "outline-variant": "#bbbaae",
+              "primary": "#4849da",
+              "secondary-fixed-dim": "#bdddbf",
+              "surface-container-lowest": "#ffffff",
+              "primary-container": "#e1e0ff",
+              "on-surface-variant": "#65655b",
+              "background": "#F2EFE9",
+              "error": "#a54731",
+              "on-tertiary-fixed-variant": "#6e4619",
+              "tertiary": "#875b2d",
+              "secondary-container": "#caebcd",
+              "on-primary-container": "#3b3acd",
+              "surface-container-highest": "#eae9dc",
+              "on-surface": "#38382f",
+              "surface-variant": "#eae9dc",
+              "secondary-fixed": "#caebcd",
+              "error-container": "#fe8b70",
+              "on-error": "#ffffff",
+              "surface-dim": "#e4e3d4",
+              "surface-tint": "#4849da",
+              "on-secondary-container": "#3c5842",
+              "inverse-primary": "#8083ff",
+              "on-primary-fixed-variant": "#4546d7",
+              "primary-dim": "#3b3bce",
+              "surface-container-low": "#fcf9f1",
+              "primary-fixed-dim": "#d1d0ff",
+              "surface-container-high": "#f0eee3",
+              "on-error-container": "#742410",
+              "primary-fixed": "#e1e0ff",
+              "surface-container": "#f6f4ea"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans"],
+              "body": ["Plus Jakarta Sans"],
+              "label": ["Plus Jakarta Sans"]
+            },
+            borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .neumorphic-lift {
+            box-shadow: -6px -6px 12px rgba(255, 255, 255, 0.8), 8px 8px 16px rgba(72, 73, 218, 0.06);
+        }
+        .neumorphic-inset {
+            box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.05), inset -4px -4px 8px rgba(255, 255, 255, 0.8);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background font-body text-on-surface min-h-screen flex items-center justify-center p-6">
+<!-- Top Navigation -->
+<nav class="fixed top-0 w-full z-50 bg-[#F2EFE9]/85 backdrop-blur-md flex items-center justify-between px-6 py-3 shadow-sm">
+<div class="flex items-center space-x-8">
+<span class="text-xl font-extrabold tracking-tighter text-[#38382f]">Alabaster Academy</span>
+<div class="hidden md:flex space-x-6">
+<a class="font-['Plus_Jakarta_Sans'] antialiased text-sm font-medium text-[#38382f]/70 hover:bg-[#4849da]/5 transition-all duration-200 px-3 py-1 rounded-full" href="#">Dashboard</a>
+<a class="font-['Plus_Jakarta_Sans'] antialiased text-sm font-medium text-[#4849da] font-bold px-3 py-1 rounded-full" href="#">Classes</a>
+<a class="font-['Plus_Jakarta_Sans'] antialiased text-sm font-medium text-[#38382f]/70 hover:bg-[#4849da]/5 transition-all duration-200 px-3 py-1 rounded-full" href="#">Exam Bank</a>
+</div>
+</div>
+<div class="flex items-center space-x-4">
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-[#4849da]/5 p-2 rounded-full transition-all" data-icon="notifications">notifications</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-[#4849da]/5 p-2 rounded-full transition-all" data-icon="help">help</button>
+<img alt="Teacher Profile" class="w-8 h-8 rounded-full shadow-sm" data-alt="Portrait of a professional teacher" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAt-XNacOQPsuoCvu4PItHCJMEcWeQh6kPF_mNaf_Ob3WG1-MVHli9RitcneoH39Y4l_QLbQYCJl6nGTjuzlSCdRT0N-_NRbEKVNyqJJpfuiKJTJNfAN1GUpK4__oF9f4OgBca8jHpTZrC3cNnletNcTyjr4Ap0fl92VAe-tS0PsNVkIQ1CzmmDVKTUUs-qKwL5d95jVd1d9Th8V74TOTjtQLF_U6m69VVYZV6d7JKT5ijnCVSGOMWdPPvf0tK9n0z9PqrmfFhOozPS"/>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="w-full max-w-5xl flex flex-col items-center justify-center mt-16 mb-16">
+<!-- Wizard Card -->
+<div class="w-full bg-surface-container-low rounded-lg p-10 neumorphic-lift flex flex-col space-y-10 relative overflow-hidden">
+<!-- Header Section -->
+<div class="flex flex-col space-y-2">
+<div class="flex items-center space-x-3 text-primary">
+<span class="material-symbols-outlined" data-icon="assignment_add">assignment_add</span>
+<span class="text-xs font-black tracking-widest uppercase">Exam Generation Utility</span>
+</div>
+<h1 class="text-3xl font-extrabold tracking-tight text-on-surface">Create New Exam Batch</h1>
+<p class="text-on-surface-variant max-w-lg">Define your exam questions and parameters to generate a unique digital-first physical exam for your students.</p>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-12">
+<!-- Step 1: Exam Questions (7 Cols) -->
+<div class="lg:col-span-7 flex flex-col space-y-4">
+<div class="flex items-center justify-between">
+<h3 class="text-sm font-bold uppercase tracking-wide text-on-surface/60">Step 1: Exam Questions</h3>
+</div>
+<button class="w-full py-3 px-4 border-2 border-dashed border-outline-variant rounded-xl flex items-center justify-center space-x-2 text-on-surface-variant hover:bg-surface-container transition-colors font-semibold text-sm">
+<span class="material-symbols-outlined text-sm" data-icon="library_books">library_books</span>
+<span>Add from Question Bank</span>
+</button>
+<!-- Compact Selected Questions List -->
+<div class="space-y-2">
+<div class="p-3 bg-surface-container-high rounded-lg flex items-center justify-between border border-white/40">
+<div class="flex items-center space-x-3">
+<span class="text-xs font-bold text-primary">Q1</span>
+<p class="text-xs font-medium text-on-surface truncate max-w-[200px]">Define the fundamental theorem of calculus...</p>
+</div>
+<button class="material-symbols-outlined text-on-surface-variant text-sm hover:text-error" data-icon="close">close</button>
+</div>
+<div class="p-3 bg-surface-container-high rounded-lg flex items-center justify-between border border-white/40">
+<div class="flex items-center space-x-3">
+<span class="text-xs font-bold text-primary">Q2</span>
+<p class="text-xs font-medium text-on-surface truncate max-w-[200px]">Solve the following differential equation...</p>
+</div>
+<button class="material-symbols-outlined text-on-surface-variant text-sm hover:text-error" data-icon="close">close</button>
+</div>
+</div>
+<!-- Rich Text Editor Box -->
+<div class="flex flex-col flex-grow">
+<div class="neumorphic-inset bg-surface-container-high rounded-xl overflow-hidden flex flex-col min-h-[250px]">
+<div class="bg-surface-container-highest px-4 py-2 flex items-center space-x-4 border-b border-outline-variant/10">
+<button class="material-symbols-outlined text-sm text-on-surface-variant" data-icon="format_bold">format_bold</button>
+<button class="material-symbols-outlined text-sm text-on-surface-variant" data-icon="format_italic">format_italic</button>
+<button class="material-symbols-outlined text-sm text-on-surface-variant" data-icon="format_list_bulleted">format_list_bulleted</button>
+<button class="material-symbols-outlined text-sm text-on-surface-variant" data-icon="functions">functions</button>
+<button class="material-symbols-outlined text-sm text-on-surface-variant" data-icon="image">image</button>
+</div>
+<textarea class="flex-grow bg-transparent border-none w-full focus:ring-0 text-sm font-medium p-4 resize-none placeholder:text-on-surface-variant/40" placeholder="Type a new question here or paste content..."></textarea>
+</div>
+<div class="mt-2 flex justify-end">
+<button class="bg-primary/10 text-primary text-[10px] font-black px-4 py-1.5 rounded-full hover:bg-primary/20 transition-colors uppercase tracking-widest">Add Question</button>
+</div>
+</div>
+</div>
+<!-- Step 2: Batch Details (5 Cols) -->
+<div class="lg:col-span-5 flex flex-col space-y-6">
+<h3 class="text-sm font-bold uppercase tracking-wide text-on-surface/60">Step 2: Batch Details</h3>
+<!-- Input Groups -->
+<div class="space-y-4">
+<div class="flex flex-col space-y-2">
+<label class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant ml-2">Subject Name</label>
+<div class="neumorphic-inset bg-surface-container-high rounded-full px-4 py-3">
+<input class="bg-transparent border-none w-full focus:ring-0 text-sm font-medium placeholder:text-on-surface-variant/40" placeholder="e.g. Advanced Mathematics" type="text"/>
+</div>
+</div>
+<div class="flex flex-col space-y-2">
+<label class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant ml-2">Exam Date</label>
+<div class="neumorphic-inset bg-surface-container-high rounded-full px-4 py-3 flex items-center">
+<input class="bg-transparent border-none w-full focus:ring-0 text-sm font-medium text-on-surface-variant" type="date"/>
+</div>
+</div>
+<div class="flex flex-col space-y-2">
+<label class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant ml-2">Time Limit (minutes)</label>
+<div class="neumorphic-inset bg-surface-container-high rounded-full px-4 py-3">
+<input class="bg-transparent border-none w-full focus:ring-0 text-sm font-medium placeholder:text-on-surface-variant/40" placeholder="e.g. 90" type="number"/>
+</div>
+</div>
+<!-- AI Grading Rules & Rubric -->
+<div class="flex flex-col space-y-2 pt-2">
+<label class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant ml-2">AI Grading Rules &amp; Rubric</label>
+<div class="neumorphic-inset bg-surface-container-high rounded-xl p-4 flex flex-col space-y-2">
+<textarea class="bg-transparent border-none w-full focus:ring-0 text-sm font-medium placeholder:text-on-surface-variant/40 min-h-[120px] resize-none" placeholder="Enter AI scoring parameters..."></textarea>
+<div class="flex justify-end">
+<button class="text-[10px] font-bold text-primary flex items-center space-x-1 hover:underline">
+<span class="material-symbols-outlined text-xs" data-icon="auto_fix_high">auto_fix_high</span>
+<span>Assist Me</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Action Area -->
+<div class="flex items-center justify-between pt-8 border-t border-surface-container-highest">
+<div class="flex items-center space-x-4">
+<div class="flex -space-x-2">
+<div class="w-8 h-8 rounded-full bg-primary-container border-2 border-surface neumorphic-lift flex items-center justify-center text-[10px] font-bold text-primary">01</div>
+<div class="w-8 h-8 rounded-full bg-surface-container-high border-2 border-surface flex items-center justify-center text-[10px] font-bold text-on-surface-variant">02</div>
+</div>
+<span class="text-xs font-semibold text-on-surface-variant">Setup Complete</span>
+</div>
+<div class="flex items-center space-x-4">
+<button class="px-6 py-3 rounded-full text-sm font-bold text-on-surface-variant hover:text-on-surface transition-colors active:scale-95">Cancel</button>
+<button class="px-8 py-3 rounded-full bg-gradient-to-br from-primary to-primary-dim text-on-primary text-sm font-extrabold neumorphic-lift active:scale-95 transform transition-all flex items-center space-x-2">
+<span>Generate Exam QR Code</span>
+<span class="material-symbols-outlined text-sm" data-icon="qr_code_2">qr_code_2</span>
+</button>
+</div>
+</div>
+<!-- Abstract Background Decorations -->
+<div class="absolute -top-12 -right-12 w-48 h-48 bg-primary/5 rounded-full blur-3xl -z-10"></div>
+<div class="absolute -bottom-12 -left-12 w-64 h-64 bg-tertiary-container/10 rounded-full blur-3xl -z-10"></div>
+</div>
+<!-- Pro Tip Section (Bento Style) -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full mt-10">
+<div class="bg-surface-container-high/40 p-6 rounded-lg border border-white/20 flex flex-col space-y-2">
+<span class="material-symbols-outlined text-primary mb-2" data-icon="tips_and_updates">tips_and_updates</span>
+<h4 class="text-xs font-black uppercase tracking-widest">Question Bank</h4>
+<p class="text-xs leading-relaxed text-on-surface-variant">Reuse validated questions from your department's shared repository for consistent testing.</p>
+</div>
+<div class="bg-surface-container-high/40 p-6 rounded-lg border border-white/20 flex flex-col space-y-2">
+<span class="material-symbols-outlined text-secondary mb-2" data-icon="qr_code">qr_code</span>
+<h4 class="text-xs font-black uppercase tracking-widest">Smart QR Codes</h4>
+<p class="text-xs leading-relaxed text-on-surface-variant">Each printed paper gets a unique QR code that automatically links student handwriting to their profile.</p>
+</div>
+<div class="bg-surface-container-high/40 p-6 rounded-lg border border-white/20 flex flex-col space-y-2">
+<span class="material-symbols-outlined text-tertiary mb-2" data-icon="history_edu">history_edu</span>
+<h4 class="text-xs font-black uppercase tracking-widest">AI Rubric</h4>
+<p class="text-xs leading-relaxed text-on-surface-variant">Define partial credit rules clearly so the AI grader follows your specific scoring logic.</p>
+</div>
+</div>
+</main>
+<!-- Bottom Nav for Mobile -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full bg-[#F2EFE9]/85 backdrop-blur-md flex items-center justify-around py-4 z-50">
+<button class="flex flex-col items-center space-y-1 text-[#38382f]/70">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="text-[10px] font-bold">HOME</span>
+</button>
+<button class="flex flex-col items-center space-y-1 text-[#4849da]">
+<span class="material-symbols-outlined" data-icon="groups">groups</span>
+<span class="text-[10px] font-bold">CLASSES</span>
+</button>
+<button class="flex flex-col items-center space-y-1 text-[#38382f]/70">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+<span class="text-[10px] font-bold">EXAMS</span>
+</button>
+</nav>
+</body></html>

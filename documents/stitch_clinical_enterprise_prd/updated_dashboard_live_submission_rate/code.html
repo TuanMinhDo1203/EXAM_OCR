@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Alabaster Academy | AI OCR Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "error-dim": "#5c1202",
+                        "tertiary-container": "#fec38c",
+                        "on-tertiary-container": "#633d11",
+                        "on-primary-fixed": "#251fbc",
+                        "on-tertiary": "#ffffff",
+                        "inverse-on-surface": "#9f9d98",
+                        "tertiary-fixed": "#fec38c",
+                        "tertiary-fixed-dim": "#efb67f",
+                        "on-secondary": "#ffffff",
+                        "secondary": "#4e6b53",
+                        "inverse-surface": "#0e0e0b",
+                        "on-background": "#38382f",
+                        "surface": "#F2EFE9",
+                        "outline": "#818176",
+                        "tertiary-dim": "#794f22",
+                        "surface-bright": "#fcffdc",
+                        "secondary-dim": "#435f48",
+                        "on-secondary-fixed": "#2a4530",
+                        "on-secondary-fixed-variant": "#46624b",
+                        "on-tertiary-fixed": "#4d2a00",
+                        "on-primary": "#faf6ff",
+                        "outline-variant": "#bbbaae",
+                        "primary": "#4849da",
+                        "secondary-fixed-dim": "#bdddbf",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-container": "#e1e0ff",
+                        "on-surface-variant": "#65655b",
+                        "background": "#F2EFE9",
+                        "error": "#a54731",
+                        "on-tertiary-fixed-variant": "#6e4619",
+                        "tertiary": "#875b2d",
+                        "secondary-container": "#caebcd",
+                        "on-primary-container": "#3b3acd",
+                        "surface-container-highest": "#eae9dc",
+                        "on-surface": "#38382f",
+                        "surface-variant": "#eae9dc",
+                        "secondary-fixed": "#caebcd",
+                        "error-container": "#fe8b70",
+                        "on-error": "#ffffff",
+                        "surface-dim": "#e4e3d4",
+                        "surface-tint": "#4849da",
+                        "on-secondary-container": "#3c5842",
+                        "inverse-primary": "#8083ff",
+                        "on-primary-fixed-variant": "#4546d7",
+                        "primary-dim": "#3b3bce",
+                        "surface-container-low": "#fcf9f1",
+                        "primary-fixed-dim": "#d1d0ff",
+                        "surface-container-high": "#f0eee3",
+                        "on-error-container": "#742410",
+                        "primary-fixed": "#e1e0ff",
+                        "surface-container": "#f6f4ea"
+                    },
+                    fontFamily: {
+                        "headline": ["Plus Jakarta Sans"],
+                        "body": ["Plus Jakarta Sans"],
+                        "label": ["Plus Jakarta Sans"]
+                    },
+                    borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F2EFE9; color: #38382f; }
+        .neumorphic-lift {
+            box-shadow: -6px -6px 12px rgba(255, 255, 255, 0.8), 8px 8px 16px rgba(72, 73, 218, 0.06);
+        }
+        .neumorphic-pressed {
+            box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.05), inset -4px -4px 8px rgba(255, 255, 255, 0.8);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<!-- SideNavBar Shell -->
+<aside class="fixed left-0 top-0 h-full flex flex-col p-6 space-y-8 h-screen w-64 bg-[#F2EFE9] dark:bg-[#121212] shadow-[6px_0_12px_rgba(0,0,0,0.02)] z-40 hidden md:flex">
+<div class="flex items-center gap-3 px-2">
+<div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-on-primary neumorphic-lift">
+<span class="material-symbols-outlined" style="">auto_stories</span>
+</div>
+<span class="text-lg font-black text-[#38382f] tracking-tighter" style="">Alabaster Academy</span>
+</div>
+<nav class="flex-1 space-y-2">
+<!-- Active Item: Dashboard -->
+<a class="flex items-center space-x-3 bg-[#F2EFE9] text-[#4849da] shadow-[inset_4px_4px_8px_rgba(0,0,0,0.05),inset_-4px_-4px_8px_rgba(255,255,255,0.8)] rounded-full px-4 py-3 font-['Plus_Jakarta_Sans'] text-sm font-semibold tracking-wide uppercase" href="#" style="">
+<span class="material-symbols-outlined" data-icon="dashboard" style="">dashboard</span>
+<span class="" style="">Dashboard</span>
+</a>
+<a class="flex items-center space-x-3 text-[#38382f] px-4 py-3 opacity-60 hover:opacity-100 hover:translate-x-1 transition-all font-['Plus_Jakarta_Sans'] text-sm font-semibold tracking-wide uppercase" href="#" style="">
+<span class="material-symbols-outlined" data-icon="groups" style="">groups</span>
+<span class="" style="">Classes</span>
+</a>
+<a class="flex items-center space-x-3 text-[#38382f] px-4 py-3 opacity-60 hover:opacity-100 hover:translate-x-1 transition-all font-['Plus_Jakarta_Sans'] text-sm font-semibold tracking-wide uppercase" href="#" style="">
+<span class="material-symbols-outlined" data-icon="description" style="">description</span>
+<span class="" style="">Exam Bank</span>
+</a>
+</nav>
+<div class="pt-6 border-t border-outline-variant/10 space-y-2">
+<a class="flex items-center space-x-3 text-[#38382f] px-4 py-3 opacity-60 hover:opacity-100 transition-all font-['Plus_Jakarta_Sans'] text-sm font-semibold tracking-wide uppercase" href="#" style="">
+<span class="material-symbols-outlined" data-icon="settings" style="">settings</span>
+<span class="" style="">Settings</span>
+</a>
+<div class="p-4 neumorphic-pressed rounded-2xl mt-4">
+<div class="flex items-center gap-3">
+<img alt="Teacher Profile" class="w-10 h-10 rounded-full object-cover" data-alt="Portrait of a female professor smiling" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCGZTmNzONURdtK0txz76YITOyKpxzfbGzqAkGtcm6dIuA8HR1Z9MsiR31KDyb4JLdIzjnRSA1NuigoEep6Xkg_d7dmGgHO9GovpIPnj_-B9PL6NMlyvxIjqW7eomt7o0t69XfvetJGlLQf-2YSWK-m8oCwguuuRRwteTGWxi_U-ZBQPUzyBRJU2v2Wm3V9l5m17bZOmJr853PlgZefpR3GwCBKPARwrkydvHd0Boo8LQgh-FSa9kPZbPAQ63IXgRP4tP0DOTIW_Jj6" style=""/>
+<div>
+<p class="text-xs font-bold text-on-surface" style="">Prof. Alabaster</p>
+<p class="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant" style="">Senior Educator</p>
+</div>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="md:ml-64 min-h-screen">
+<!-- TopAppBar -->
+<header class="sticky top-0 w-full z-50 bg-[#F2EFE9]/85 backdrop-blur-md shadow-sm flex items-center justify-between px-6 py-3 w-full">
+<div class="flex items-center gap-4">
+<div class="hidden md:flex neumorphic-pressed px-4 py-2 rounded-full items-center gap-2">
+<span class="material-symbols-outlined text-outline text-sm" style="">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm w-64 placeholder:text-outline-variant" placeholder="Search exams..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-[#4849da]/5 transition-all active:scale-95" style="">
+<span class="material-symbols-outlined" data-icon="notifications" style="">notifications</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-[#4849da]/5 transition-all active:scale-95" style="">
+<span class="material-symbols-outlined" data-icon="help" style="">help</span>
+</button>
+</div>
+</header>
+<div class="p-6 md:p-10 max-w-7xl mx-auto space-y-10">
+<!-- 1. Global Action Banner -->
+<section class="neumorphic-lift rounded-lg p-8 bg-gradient-to-br from-surface-container-low to-surface flex flex-col md:flex-row items-center justify-between gap-6 border border-white/40">
+<div class="flex items-center gap-6">
+<div class="w-16 h-16 rounded-full bg-error-container/20 flex items-center justify-center text-error neumorphic-pressed">
+<span class="material-symbols-outlined text-3xl" style='font-variation-settings: "FILL" 1;'>priority_high</span>
+</div>
+<div>
+<h1 class="text-2xl font-extrabold tracking-tight text-on-surface" style="">3 Exam Batches require attention</h1>
+<p class="text-on-surface-variant font-medium" style="">AI confidence levels are below threshold for manual verification.</p>
+</div>
+</div>
+<button class="bg-primary hover:bg-primary-dim text-on-primary px-8 py-4 rounded-full font-bold shadow-lg shadow-primary/20 flex items-center gap-2 active:scale-95 transition-all whitespace-nowrap" style="">
+<span class="material-symbols-outlined" style="">add_circle</span>
+                    Create Exam
+                </button>
+</section>
+<!-- 2. Analytics Grid -->
+<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+<!-- Widget 1: Processing Time -->
+<div class="neumorphic-lift p-6 rounded-lg bg-surface flex flex-col gap-4">
+<div class="flex justify-between items-start">
+<span class="text-[10px] font-extrabold uppercase tracking-widest text-primary bg-primary-container px-2 py-1 rounded" style="">Performance</span>
+<span class="material-symbols-outlined text-outline" style="">more_vert</span>
+</div>
+<h3 class="text-on-surface-variant text-sm font-bold" style="">Live Submission Rate</h3>
+<div class="flex-1 flex items-center justify-center overflow-hidden h-24 mt-2"><svg class="w-full h-full text-primary" viewbox="0 0 100 40"><path d="M0 35 Q 20 35, 40 10 T 70 20 T 100 5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="3"></path><path d="M0 35 Q 20 35, 40 10 T 70 20 T 100 5 L 100 40 L 0 40 Z" fill="url(#grad-widget-1)" opacity="0.1"></path><defs><lineargradient id="grad-widget-1" x1="0%" x2="0%" y1="0%" y2="100%"><stop offset="0%" style="stop-color:currentColor;stop-opacity:1"></stop><stop offset="100%" style="stop-color:currentColor;stop-opacity:0"></stop></lineargradient></defs></svg></div>
+<p class="text-xl font-black mt-2" style="">124 <span class="text-xs font-bold text-secondary">uploads/hr</span></p>
+</div>
+<!-- Widget 2: Task Priority -->
+<div class="neumorphic-lift p-6 rounded-lg bg-surface flex flex-col gap-4">
+<h3 class="text-on-surface-variant text-sm font-bold" style="">Task Priority</h3>
+<div class="relative w-28 h-28 mx-auto flex items-center justify-center">
+<svg class="w-full h-full transform -rotate-90">
+<circle class="text-surface-container-highest" cx="56" cy="56" fill="transparent" r="48" stroke="currentColor" stroke-width="12"></circle>
+<circle class="text-primary" cx="56" cy="56" fill="transparent" r="48" stroke="currentColor" stroke-dasharray="301.59" stroke-dashoffset="75" stroke-width="12"></circle>
+</svg>
+<div class="absolute inset-0 flex items-center justify-center flex-col">
+<span class="text-lg font-black" style="">75%</span>
+<span class="text-[8px] uppercase font-bold text-outline" style="">Urgent</span>
+</div>
+</div>
+<div class="flex justify-between text-[10px] font-bold">
+<div class="flex items-center gap-1" style=""><span class="w-2 h-2 rounded-full bg-primary"></span> High</div>
+<div class="flex items-center gap-1" style=""><span class="w-2 h-2 rounded-full bg-surface-container-highest"></span> Standard</div>
+</div>
+</div>
+<!-- Widget 3: Score Distribution -->
+<div class="neumorphic-lift p-6 rounded-lg bg-surface flex flex-col gap-4">
+<h3 class="text-on-surface-variant text-sm font-bold" style="">Score Dist.</h3>
+<div class="flex-1 flex items-center justify-center overflow-hidden">
+<svg class="w-full h-20 text-primary" viewbox="0 0 100 40">
+<path d="M0 35 Q 20 35, 40 15 T 80 5 T 100 25" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="3"></path>
+<path d="M0 35 Q 20 35, 40 15 T 80 5 T 100 25 L 100 40 L 0 40 Z" fill="url(#grad)" opacity="0.1"></path>
+<defs>
+<lineargradient id="grad" x1="0%" x2="0%" y1="0%" y2="100%">
+<stop offset="0%" style="stop-color:currentColor;stop-opacity:1"></stop>
+<stop offset="100%" style="stop-color:currentColor;stop-opacity:0"></stop>
+</lineargradient>
+</defs>
+</svg>
+</div>
+<div class="flex justify-between items-baseline">
+<p class="text-xl font-black" style="">68.4</p>
+<span class="text-xs font-bold text-secondary" style="">+4.2%</span>
+</div>
+</div>
+<!-- Widget 4: AI Confidence Risk -->
+<div class="neumorphic-lift p-6 rounded-lg bg-surface flex flex-col gap-3">
+<h3 class="text-on-surface-variant text-sm font-bold" style="">Confidence Risk</h3>
+<ul class="space-y-2">
+<li class="flex items-center justify-between p-2 neumorphic-pressed rounded-xl" style="">
+<span class="text-[10px] font-bold" style="">MTH-202</span>
+<span class="text-[10px] font-bold text-error" style="">Critical</span>
+</li>
+<li class="flex items-center justify-between p-2 neumorphic-pressed rounded-xl" style="">
+<span class="text-[10px] font-bold" style="">BIO-105</span>
+<span class="text-[10px] font-bold text-tertiary" style="">Medium</span>
+</li>
+<li class="flex items-center justify-between p-2 neumorphic-pressed rounded-xl" style="">
+<span class="text-[10px] font-bold" style="">ENG-404</span>
+<span class="text-[10px] font-bold text-tertiary" style="">Medium</span>
+</li>
+</ul>
+</div>
+</section>
+<!-- 3. Main Data Table -->
+<section class="space-y-6">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+<div class="flex p-1 neumorphic-pressed rounded-full w-fit">
+<button class="px-6 py-2 rounded-full text-sm font-bold bg-[#F2EFE9] text-primary neumorphic-lift transition-all" style="">Open Exams</button>
+<button class="px-6 py-2 rounded-full text-sm font-bold text-on-surface-variant opacity-60 hover:opacity-100 transition-all" style="">Completed Exams</button>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 neumorphic-lift rounded-lg text-on-surface-variant active:scale-95" style="">
+<span class="material-symbols-outlined" style="">filter_list</span>
+</button>
+<button class="p-2 neumorphic-lift rounded-lg text-on-surface-variant active:scale-95" style="">
+<span class="material-symbols-outlined" style="">file_download</span>
+</button>
+</div>
+</div>
+<div class="overflow-x-auto pb-4">
+<table class="w-full border-separate border-spacing-y-4">
+<thead>
+<tr class="text-left">
+<th class="px-6 text-[10px] font-extrabold uppercase tracking-widest text-on-surface-variant pb-2" style="">Code</th>
+<th class="px-6 text-[10px] font-extrabold uppercase tracking-widest text-on-surface-variant pb-2" style="">Subject</th>
+<th class="px-6 text-[10px] font-extrabold uppercase tracking-widest text-on-surface-variant pb-2" style="">Date</th>
+<th class="px-6 text-[10px] font-extrabold uppercase tracking-widest text-on-surface-variant pb-2 text-center" style="">Papers</th>
+<th class="px-6 text-[10px] font-extrabold uppercase tracking-widest text-on-surface-variant pb-2" style="">Progress</th>
+<th class="px-6 text-[10px] font-extrabold uppercase tracking-widest text-on-surface-variant pb-2" style="">Confidence</th>
+<th class="px-6 text-[10px] font-extrabold uppercase tracking-widest text-on-surface-variant pb-2" style="">Status</th>
+<th class="px-6 text-[10px] font-extrabold uppercase tracking-widest text-on-surface-variant pb-2" style=""></th>
+</tr>
+</thead>
+<tbody>
+<!-- Row 1 -->
+<tr class="bg-white/30 hover:bg-white/50 transition-colors neumorphic-lift group">
+<td class="px-6 py-5 rounded-l-lg font-bold text-sm" style="">MTH-402</td>
+<td class="px-6 py-5" style="">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-primary-container/30 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-sm" style="">functions</span>
+</div>
+<span class="font-bold text-sm" style="">Advanced Calculus II</span>
+</div>
+</td>
+<td class="px-6 py-5 text-sm text-on-surface-variant" style="">Oct 24, 2023</td>
+<td class="px-6 py-5 text-sm font-bold text-center" style="">48 / 50</td>
+<td class="px-6 py-5" style="">
+<div class="flex gap-1">
+<div class="h-1.5 w-6 bg-primary rounded-full"></div>
+<div class="h-1.5 w-6 bg-primary rounded-full"></div>
+<div class="h-1.5 w-6 bg-primary rounded-full"></div>
+<div class="h-1.5 w-6 bg-surface-container-highest rounded-full"></div>
+</div>
+</td>
+<td class="px-6 py-5" style="">
+<span class="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase bg-secondary-container text-on-secondary-container" style="">98.2% High</span>
+</td>
+<td class="px-6 py-5" style="">
+<span class="flex items-center gap-1.5 text-[10px] font-extrabold uppercase text-secondary" style="">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+                                        Finalizing
+                                    </span>
+</td>
+<td class="px-6 py-5 rounded-r-lg text-right" style="">
+<button class="p-2 hover:bg-primary-container rounded-full text-primary transition-all" style="">
+<span class="material-symbols-outlined" style="">chevron_right</span>
+</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="bg-white/30 hover:bg-white/50 transition-colors neumorphic-lift group">
+<td class="px-6 py-5 rounded-l-lg font-bold text-sm" style="">PHY-101</td>
+<td class="px-6 py-5" style="">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-tertiary-container/30 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined text-sm" style="">bolt</span>
+</div>
+<span class="font-bold text-sm" style="">Introductory Physics</span>
+</div>
+</td>
+<td class="px-6 py-5 text-sm text-on-surface-variant" style="">Oct 22, 2023</td>
+<td class="px-6 py-5 text-sm font-bold text-center" style="">12 / 120</td>
+<td class="px-6 py-5" style="">
+<div class="flex gap-1">
+<div class="h-1.5 w-6 bg-primary rounded-full"></div>
+<div class="h-1.5 w-6 bg-surface-container-highest rounded-full"></div>
+<div class="h-1.5 w-6 bg-surface-container-highest rounded-full"></div>
+<div class="h-1.5 w-6 bg-surface-container-highest rounded-full"></div>
+</div>
+</td>
+<td class="px-6 py-5" style="">
+<span class="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase bg-error-container text-on-error-container" style="">62.0% Low</span>
+</td>
+<td class="px-6 py-5" style="">
+<span class="flex items-center gap-1.5 text-[10px] font-extrabold uppercase text-error" style="">
+<span class="w-1.5 h-1.5 rounded-full bg-error animate-pulse"></span>
+                                        Attention
+                                    </span>
+</td>
+<td class="px-6 py-5 rounded-r-lg text-right" style="">
+<button class="p-2 hover:bg-primary-container rounded-full text-primary transition-all" style="">
+<span class="material-symbols-outlined" style="">chevron_right</span>
+</button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="bg-white/30 hover:bg-white/50 transition-colors neumorphic-lift group">
+<td class="px-6 py-5 rounded-l-lg font-bold text-sm" style="">HIS-305</td>
+<td class="px-6 py-5" style="">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-secondary-container/30 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-sm" style="">history_edu</span>
+</div>
+<span class="font-bold text-sm" style="">Medieval History</span>
+</div>
+</td>
+<td class="px-6 py-5 text-sm text-on-surface-variant" style="">Oct 20, 2023</td>
+<td class="px-6 py-5 text-sm font-bold text-center" style="">88 / 90</td>
+<td class="px-6 py-5" style="">
+<div class="flex gap-1">
+<div class="h-1.5 w-6 bg-primary rounded-full"></div>
+<div class="h-1.5 w-6 bg-primary rounded-full"></div>
+<div class="h-1.5 w-6 bg-primary rounded-full"></div>
+<div class="h-1.5 w-6 bg-primary rounded-full"></div>
+</div>
+</td>
+<td class="px-6 py-5" style="">
+<span class="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase bg-secondary-container text-on-secondary-container" style="">94.8% High</span>
+</td>
+<td class="px-6 py-5" style="">
+<span class="flex items-center gap-1.5 text-[10px] font-extrabold uppercase text-on-surface-variant" style="">
+<span class="w-1.5 h-1.5 rounded-full bg-outline"></span>
+                                        Processing
+                                    </span>
+</td>
+<td class="px-6 py-5 rounded-r-lg text-right" style="">
+<button class="p-2 hover:bg-primary-container rounded-full text-primary transition-all" style="">
+<span class="material-symbols-outlined" style="">chevron_right</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</div>
+</main>
+<!-- Mobile NavBar -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 bg-[#F2EFE9]/85 backdrop-blur-md shadow-[0_-4px_12px_rgba(0,0,0,0.05)] flex justify-around p-4 z-50">
+<a class="flex flex-col items-center gap-1 text-[#4849da] font-bold" href="#" style="">
+<span class="material-symbols-outlined" style='font-variation-settings: "FILL" 1;'>dashboard</span>
+<span class="text-[10px]" style="">Home</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-[#38382f]/70" href="#" style="">
+<span class="material-symbols-outlined" style="">groups</span>
+<span class="text-[10px]" style="">Classes</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-[#38382f]/70" href="#" style="">
+<span class="material-symbols-outlined" style="">description</span>
+<span class="text-[10px]" style="">Exams</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-[#38382f]/70" href="#" style="">
+<span class="material-symbols-outlined" style="">settings</span>
+<span class="text-[10px]" style="">Settings</span>
+</a>
+</nav>
+<!-- FAB (Suppressed based on context guidelines, only on relevant summary screens) -->
+<div class="fixed bottom-24 right-6 md:bottom-10 md:right-10 z-50 md:hidden">
+<button class="w-14 h-14 bg-primary text-on-primary rounded-full shadow-2xl flex items-center justify-center active:scale-95 transition-transform" style="">
+<span class="material-symbols-outlined text-3xl" style="">add</span>
+</button>
+</div>
+</body></html>

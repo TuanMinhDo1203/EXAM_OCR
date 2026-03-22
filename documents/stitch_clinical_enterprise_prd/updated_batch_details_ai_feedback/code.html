@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Batch Details - Biology 101 Midterm</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "error-dim": "#5c1202",
+              "tertiary-container": "#fec38c",
+              "on-tertiary-container": "#633d11",
+              "on-primary-fixed": "#251fbc",
+              "on-tertiary": "#ffffff",
+              "inverse-on-surface": "#9f9d98",
+              "tertiary-fixed": "#fec38c",
+              "tertiary-fixed-dim": "#efb67f",
+              "on-secondary": "#ffffff",
+              "secondary": "#4e6b53",
+              "inverse-surface": "#0e0e0b",
+              "on-background": "#38382f",
+              "surface": "#F2EFE9",
+              "outline": "#818176",
+              "tertiary-dim": "#794f22",
+              "surface-bright": "#fcffdc",
+              "secondary-dim": "#435f48",
+              "on-secondary-fixed": "#2a4530",
+              "on-secondary-fixed-variant": "#46624b",
+              "on-tertiary-fixed": "#4d2a00",
+              "on-primary": "#faf6ff",
+              "outline-variant": "#bbbaae",
+              "primary": "#4849da",
+              "secondary-fixed-dim": "#bdddbf",
+              "surface-container-lowest": "#ffffff",
+              "primary-container": "#e1e0ff",
+              "on-surface-variant": "#65655b",
+              "background": "#F2EFE9",
+              "error": "#a54731",
+              "on-tertiary-fixed-variant": "#6e4619",
+              "tertiary": "#875b2d",
+              "secondary-container": "#caebcd",
+              "on-primary-container": "#3b3acd",
+              "surface-container-highest": "#eae9dc",
+              "on-surface": "#38382f",
+              "surface-variant": "#eae9dc",
+              "secondary-fixed": "#caebcd",
+              "error-container": "#fe8b70",
+              "on-error": "#ffffff",
+              "surface-dim": "#e4e3d4",
+              "surface-tint": "#4849da",
+              "on-secondary-container": "#3c5842",
+              "inverse-primary": "#8083ff",
+              "on-primary-fixed-variant": "#4546d7",
+              "primary-dim": "#3b3bce",
+              "surface-container-low": "#fcf9f1",
+              "primary-fixed-dim": "#d1d0ff",
+              "surface-container-high": "#f0eee3",
+              "on-error-container": "#742410",
+              "primary-fixed": "#e1e0ff",
+              "surface-container": "#f6f4ea"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans"],
+              "body": ["Plus Jakarta Sans"],
+              "label": ["Plus Jakarta Sans"]
+            },
+            borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .neumorph-lift {
+        box-shadow: -6px -6px 12px rgba(255, 255, 255, 0.8), 8px 8px 16px rgba(72, 73, 218, 0.06);
+      }
+      .neumorph-pressed {
+        box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.05), inset -4px -4px 8px rgba(255, 255, 255, 0.8);
+      }
+      .neumorph-hover:hover {
+        box-shadow: -12px -12px 24px rgba(255, 255, 255, 0.9), 12px 12px 24px rgba(72, 73, 218, 0.1);
+        transform: translateY(-2px);
+      }
+    </style>
+</head>
+<body class="bg-background font-body text-on-surface min-h-screen">
+<!-- Top Navigation Bar -->
+<header class="sticky top-0 w-full z-50 bg-[#F2EFE9]/85 backdrop-blur-md shadow-sm">
+<div class="flex items-center justify-between px-6 py-3 w-full">
+<div class="flex items-center space-x-6">
+<span class="text-xl font-extrabold tracking-tighter text-[#38382f]">Alabaster Academy</span>
+<nav class="hidden md:flex items-center space-x-6 text-sm font-medium">
+<a class="flex items-center space-x-1 text-[#4849da] font-bold" href="#">
+<span class="material-symbols-outlined text-lg">arrow_back</span>
+<span>Back to Dashboard</span>
+</a>
+</nav>
+</div>
+<div class="flex items-center space-x-4">
+<button class="p-2 rounded-full hover:bg-[#4849da]/5 transition-all active:scale-95">
+<span class="material-symbols-outlined text-on-surface-variant">notifications</span>
+</button>
+<button class="p-2 rounded-full hover:bg-[#4849da]/5 transition-all active:scale-95">
+<span class="material-symbols-outlined text-on-surface-variant">help</span>
+</button>
+<div class="h-8 w-8 rounded-full overflow-hidden neumorph-lift">
+<img alt="Teacher Profile" class="w-full h-full object-cover" data-alt="Close up portrait of a smiling female teacher" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBeJekkYFEmLRIFX2S3JIjz5UVi0YP5MnQoW8yetfNNVmhyFfH4a-BsgfaROGIQTAHglwNf7czEOzM2QAK-apinsiaEE6a0lSP6hBUBvDO4o15PXBTGZElXUAz6z5Lq6tFwH-82_uisBnp8O8jZwpDkZlcu8pRPO3V0iSlMmKIUAq-kRzuMfnkhzuvsY5mimOgNhfhHuuHWdvPBY_TLgPyGBFelpmES1sXqVpGVWlp9WYVQMRwEbi6fzD176Y1cz6aqFKVmm_aYZeC2"/>
+</div>
+</div>
+</div>
+</header>
+<main class="max-w-7xl mx-auto px-6 py-10 space-y-10">
+<!-- Batch Header Section -->
+<section class="space-y-6">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div>
+<span class="text-[10px] font-black uppercase tracking-widest text-primary mb-2 block">Batch Details</span>
+<h1 class="text-3xl font-extrabold tracking-tight text-on-surface">Biology 101 Midterm</h1>
+<p class="text-on-surface-variant text-sm mt-1">Section B • Faculty of Sciences • Exam Date: Oct 24, 2023</p>
+</div>
+<div class="flex space-x-3">
+<button class="px-6 py-3 bg-surface-container-high text-on-surface font-bold text-sm rounded-full neumorph-lift hover:opacity-80 transition-all active:scale-95 flex items-center space-x-2">
+<span class="material-symbols-outlined text-lg">download</span>
+<span>Export CSV</span>
+</button>
+<button class="px-6 py-3 bg-gradient-to-br from-primary to-primary-dim text-on-primary font-bold text-sm rounded-full shadow-lg hover:brightness-110 transition-all active:scale-95 flex items-center space-x-2">
+<span class="material-symbols-outlined text-lg" data-weight="fill">add_task</span>
+<span>Finalize Batch</span>
+</button>
+</div>
+</div>
+<!-- Metadata Bento Grid -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+<!-- Total Scanned -->
+<div class="p-6 rounded-lg bg-surface-container neumorph-lift border-t border-white/40">
+<div class="flex items-center justify-between mb-4">
+<span class="material-symbols-outlined text-primary p-2 bg-primary-container/30 rounded-xl">description</span>
+<span class="text-[10px] font-black bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded-full">+12%</span>
+</div>
+<div class="space-y-1">
+<p class="text-sm font-semibold text-on-surface-variant opacity-70">Total Scanned</p>
+<h3 class="text-3xl font-extrabold tracking-tight">142</h3>
+<p class="text-[10px] text-on-surface-variant font-bold uppercase tracking-wider">Papers processed</p>
+</div>
+</div>
+<!-- OCR Accuracy -->
+<div class="p-6 rounded-lg bg-surface-container neumorph-lift border-t border-white/40">
+<div class="flex items-center justify-between mb-4">
+<span class="material-symbols-outlined text-secondary p-2 bg-secondary-container/30 rounded-xl">verified</span>
+<div class="w-12 h-1 bg-outline-variant/20 rounded-full overflow-hidden">
+<div class="w-[98%] h-full bg-secondary"></div>
+</div>
+</div>
+<div class="space-y-1">
+<p class="text-sm font-semibold text-on-surface-variant opacity-70">OCR Accuracy</p>
+<h3 class="text-3xl font-extrabold tracking-tight text-secondary">98.4%</h3>
+<p class="text-[10px] text-on-surface-variant font-bold uppercase tracking-wider">High precision</p>
+</div>
+</div>
+<!-- Flags Found -->
+<div class="p-6 rounded-lg bg-surface-container neumorph-lift border-t border-white/40">
+<div class="flex items-center justify-between mb-4">
+<span class="material-symbols-outlined text-error p-2 bg-error-container/20 rounded-xl">flag</span>
+<span class="text-[10px] font-black bg-error-container text-on-error-container px-2 py-0.5 rounded-full">Requires Action</span>
+</div>
+<div class="space-y-1">
+<p class="text-sm font-semibold text-on-surface-variant opacity-70">Flags Found</p>
+<h3 class="text-3xl font-extrabold tracking-tight text-error">08</h3>
+<p class="text-[10px] text-on-surface-variant font-bold uppercase tracking-wider">Manual checks</p>
+</div>
+</div>
+<!-- Avg Score -->
+<div class="p-6 rounded-lg bg-surface-container neumorph-lift border-t border-white/40">
+<div class="flex items-center justify-between mb-4">
+<span class="material-symbols-outlined text-tertiary p-2 bg-tertiary-container/30 rounded-xl">analytics</span>
+</div>
+<div class="space-y-1">
+<p class="text-sm font-semibold text-on-surface-variant opacity-70">Avg. Score</p>
+<h3 class="text-3xl font-extrabold tracking-tight">76.2</h3>
+<p class="text-[10px] text-on-surface-variant font-bold uppercase tracking-wider">Mean performance</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Main Content: Student Submissions -->
+<section class="space-y-6">
+<div class="flex items-center justify-between">
+<h2 class="text-xl font-bold tracking-tight text-on-surface">Student Submissions</h2>
+<div class="flex items-center space-x-4">
+<div class="relative">
+<input class="w-64 pl-10 pr-4 py-2 text-sm bg-surface-container-low border-none rounded-full neumorph-pressed focus:ring-2 focus:ring-primary/20 transition-all outline-none text-on-surface" placeholder="Search Student ID..." type="text"/>
+<span class="material-symbols-outlined absolute left-3 top-2.5 text-on-surface-variant text-lg">search</span>
+</div>
+<button class="p-2 bg-surface-container rounded-full neumorph-lift active:scale-95 transition-all">
+<span class="material-symbols-outlined text-on-surface-variant">filter_list</span>
+</button>
+</div>
+</div>
+<!-- Submissions Table -->
+<div class="overflow-x-auto pb-8">
+<table class="w-full border-separate border-spacing-y-4">
+<thead>
+<tr class="text-left text-[10px] font-black uppercase tracking-[0.15em] text-on-surface-variant/60">
+<th class="px-6 py-2">Student ID</th>
+<th class="px-6 py-2">Scanned Pages</th>
+<th class="px-6 py-2">OCR Status</th>
+<th class="px-6 py-2">AI FEEDBACK / REASON</th>
+<th class="px-6 py-2 text-center">Score</th>
+<th class="px-6 py-2 text-right">Actions</th>
+</tr>
+</thead>
+<tbody>
+<!-- Row 1 -->
+<tr class="bg-surface-container-low/50 group transition-all duration-200 hover:bg-white neumorph-hover cursor-pointer">
+<td class="px-6 py-5 rounded-l-lg">
+<div class="flex items-center space-x-3">
+<div class="h-8 w-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-xs">JD</div>
+<span class="font-bold text-sm tracking-tight">2023-BIO-0442</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<div class="flex items-center space-x-1">
+<span class="material-symbols-outlined text-sm text-on-surface-variant">auto_stories</span>
+<span class="text-sm font-medium">12 Pages</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="flex items-center space-x-2 text-[10px] font-black uppercase bg-secondary-container/40 text-secondary px-3 py-1 rounded-full w-fit">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+<span>Verified</span>
+</span>
+</td>
+<td class="px-6 py-5"><span class="text-sm font-medium text-on-surface-variant/80 italic">Excellent synthesis...</span></td>
+<td class="px-6 py-5">
+<div class="text-center">
+<span class="font-bold text-lg text-secondary">88</span>
+<span class="text-[10px] font-bold text-on-surface-variant opacity-50">/100</span>
+</div>
+</td>
+<td class="px-6 py-5 rounded-r-lg text-right">
+<button class="px-4 py-2 bg-surface text-primary font-bold text-xs rounded-full neumorph-lift hover:bg-primary hover:text-white transition-all active:scale-95">Review Paper</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="bg-surface-container-low/50 group transition-all duration-200 hover:bg-white neumorph-hover cursor-pointer">
+<td class="px-6 py-5 rounded-l-lg">
+<div class="flex items-center space-x-3">
+<div class="h-8 w-8 rounded-full bg-tertiary-container text-on-tertiary-container flex items-center justify-center font-bold text-xs">AS</div>
+<span class="font-bold text-sm tracking-tight">2023-BIO-0449</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<div class="flex items-center space-x-1">
+<span class="material-symbols-outlined text-sm text-on-surface-variant">auto_stories</span>
+<span class="text-sm font-medium">11 Pages</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="flex items-center space-x-2 text-[10px] font-black uppercase bg-error-container/20 text-error px-3 py-1 rounded-full w-fit">
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span>
+<span>Attention</span>
+</span>
+</td>
+<td class="px-6 py-5"><span class="text-sm font-medium text-on-surface-variant/80 italic">Unclear logic in step 2...</span></td>
+<td class="px-6 py-5">
+<div class="text-center">
+<span class="font-bold text-lg text-on-surface-variant">--</span>
+</div>
+</td>
+<td class="px-6 py-5 rounded-r-lg text-right">
+<button class="px-4 py-2 bg-error text-on-error font-bold text-xs rounded-full shadow-md hover:brightness-110 transition-all active:scale-95">Resolve OCR</button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="bg-surface-container-low/50 group transition-all duration-200 hover:bg-white neumorph-hover cursor-pointer">
+<td class="px-6 py-5 rounded-l-lg">
+<div class="flex items-center space-x-3">
+<div class="h-8 w-8 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-bold text-xs">MK</div>
+<span class="font-bold text-sm tracking-tight">2023-BIO-0455</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<div class="flex items-center space-x-1">
+<span class="material-symbols-outlined text-sm text-on-surface-variant">auto_stories</span>
+<span class="text-sm font-medium">12 Pages</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="flex items-center space-x-2 text-[10px] font-black uppercase bg-secondary-container/40 text-secondary px-3 py-1 rounded-full w-fit">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+<span>Verified</span>
+</span>
+</td>
+<td class="px-6 py-5"><span class="text-sm font-medium text-on-surface-variant/80 italic">Missing units in Q4...</span></td>
+<td class="px-6 py-5">
+<div class="text-center">
+<span class="font-bold text-lg text-on-surface">64</span>
+<span class="text-[10px] font-bold text-on-surface-variant opacity-50">/100</span>
+</div>
+</td>
+<td class="px-6 py-5 rounded-r-lg text-right">
+<button class="px-4 py-2 bg-surface text-primary font-bold text-xs rounded-full neumorph-lift hover:bg-primary hover:text-white transition-all active:scale-95">Review Paper</button>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="bg-surface-container-low/50 group transition-all duration-200 hover:bg-white neumorph-hover cursor-pointer">
+<td class="px-6 py-5 rounded-l-lg">
+<div class="flex items-center space-x-3">
+<div class="h-8 w-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-xs">RL</div>
+<span class="font-bold text-sm tracking-tight">2023-BIO-0461</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<div class="flex items-center space-x-1">
+<span class="material-symbols-outlined text-sm text-on-surface-variant">auto_stories</span>
+<span class="text-sm font-medium">12 Pages</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="flex items-center space-x-2 text-[10px] font-black uppercase bg-tertiary-container/40 text-tertiary px-3 py-1 rounded-full w-fit">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+<span>Pending</span>
+</span>
+</td>
+<td class="px-6 py-5"><span class="text-sm font-medium text-on-surface-variant/80 italic">Clear derivation found...</span></td>
+<td class="px-6 py-5">
+<div class="text-center">
+<span class="font-bold text-lg text-on-surface-variant">--</span>
+</div>
+</td>
+<td class="px-6 py-5 rounded-r-lg text-right">
+<button class="px-4 py-2 bg-surface text-on-surface-variant/40 font-bold text-xs rounded-full border border-outline-variant/30 cursor-not-allowed">Review Paper</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="flex items-center justify-between pt-4">
+<p class="text-[10px] font-black uppercase tracking-wider text-on-surface-variant/60">Showing 1-10 of 142 submissions</p>
+<div class="flex items-center space-x-2">
+<button class="w-10 h-10 rounded-full flex items-center justify-center neumorph-pressed text-on-surface-variant">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<button class="w-10 h-10 rounded-full flex items-center justify-center bg-primary text-on-primary font-bold shadow-md">1</button>
+<button class="w-10 h-10 rounded-full flex items-center justify-center neumorph-lift hover:bg-surface-container-high transition-all font-bold">2</button>
+<button class="w-10 h-10 rounded-full flex items-center justify-center neumorph-lift hover:bg-surface-container-high transition-all font-bold">3</button>
+<button class="w-10 h-10 rounded-full flex items-center justify-center neumorph-lift hover:bg-surface-container-high transition-all text-on-surface-variant">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</div>
+</section>
+</main>
+<!-- Contextual FAB (Only for specific actions on main dashboard, but kept minimal here for detail focused screen) -->
+<div class="fixed bottom-8 right-8">
+<button class="w-14 h-14 rounded-full bg-primary text-on-primary shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all">
+<span class="material-symbols-outlined text-2xl">chat_bubble</span>
+</button>
+</div>
+</body></html>

@@ -2,9 +2,11 @@ fastapi==0.116.1
 httpx==0.28.1
 numpy
 pillow
+pyodbc==5.2.0
 pydantic-settings==2.10.1
 python-multipart==0.0.20
 scikit-learn
+SQLAlchemy==2.0.36
 torch
 torchvision
 transformers

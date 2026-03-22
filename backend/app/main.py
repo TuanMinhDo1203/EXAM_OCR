@@ -7,8 +7,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.api import grade_router, health_router, ocr_router
+from app.api import db_router, grade_router, health_router, ocr_router
 from app.core.config import get_settings
+from app.database import check_database_connection, init_database
 from app.core.logger import get_logger, setup_logging
 from app.core.model_registry import ModelRegistry
 from app.services.ocr_pipeline import OCRPipelineService
@@ -22,6 +23,12 @@ async def lifespan(app: FastAPI):
 
     app.state.settings = settings
     app.state.logger = logger
+    app.state.db_ok = False
+    try:
+        init_database(create_tables=settings.auto_create_db_schema)
+        app.state.db_ok = check_database_connection()
+    except Exception:
+        logger.exception("Database init failed at startup")
     app.state.model_registry = ModelRegistry(settings)
     try:
         app.state.model_registry.load()
@@ -76,3 +83,4 @@ async def request_context_middleware(request: Request, call_next):
 app.include_router(health_router)
 app.include_router(ocr_router)
 app.include_router(grade_router)
+app.include_router(db_router)

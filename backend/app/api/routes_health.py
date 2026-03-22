@@ -17,6 +17,7 @@ def ready(request: Request) -> dict:
     return {
         "status": "ready" if registry.is_ready else "degraded",
         "models_loaded": registry.is_ready,
+        "database_connected": getattr(request.app.state, "db_ok", False),
         "device": registry.get_models().device if registry.is_ready else None,
         "grading_enabled": settings.enable_grading,
         "internal_grading_only": settings.internal_grading_only,

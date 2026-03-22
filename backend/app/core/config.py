@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     host: str = "0.0.0.0"
     port: int = 8000
     streamlit_port: int = 8501
+    auto_create_db_schema: bool = False
 
     device: Literal["auto", "cpu", "cuda"] = "auto"
     max_upload_mb: int = 10
@@ -38,15 +39,26 @@ class Settings(BaseSettings):
     yolo_min_conf: float = 0.25
     trocr_max_tokens: int = 128
     trocr_num_beams: int = 5
+    classification_batch_size: int = 16
+    trocr_batch_size: int = 8
     pad_x: int = 10
     pad_y: int = 6
     indent_cluster_eps: int = 15
     indent_spaces: int = 4
+    max_image_dim: int = 1600
+    save_uploads: bool = False
+    save_visualizations: bool = True
 
     enable_grading: bool = False
     internal_grading_only: bool = True
     grading_api_key: str | None = None
     grading_timeout_seconds: int = 5
+
+    db_server: str = "examocrserver.database.windows.net"
+    db_port: int = 1433
+    db_name: str = "examocrdb"
+    db_user: str = "sqladmin"
+    db_password: str = "ChangeMe123!"
 
     base_dir: Path = Field(default_factory=lambda: PROJECT_ROOT)
     storage_dir: Path = Field(default_factory=lambda: PROJECT_ROOT / "backend" / "runtime")

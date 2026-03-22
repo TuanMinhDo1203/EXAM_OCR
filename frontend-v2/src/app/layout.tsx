@@ -1,30 +1,26 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
+import type { Metadata } from 'next';
+import { Outfit } from 'next/font/google';
+import './globals.css';
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+const outfit = Outfit({ 
+  subsets: ['latin'],
+  variable: '--font-outfit',
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
-  title: "EXAM_OCR — AI Grading",
-  description: "AI Auto-Grading Platform",
+  title: 'EXAM_OCR V2.0',
+  description: 'AI-Powered Exam Grading System',
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
-      <body className="flex min-h-screen flex-col bg-[var(--background)] text-[var(--foreground)]">
+    <html lang="en" className={`${outfit.variable} font-sans`}>
+      <body className="bg-slate-50 text-slate-900 antialiased selection:bg-indigo-500/30">
         {children}
       </body>
     </html>

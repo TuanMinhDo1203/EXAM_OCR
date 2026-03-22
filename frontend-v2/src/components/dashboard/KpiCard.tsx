@@ -22,9 +22,10 @@ export function KpiCard({ title, value, trend, icon, subtitle, variant = 'defaul
   };
 
   return (
-    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col">
-      <div className="flex justify-between items-start mb-4">
-        <h3 className="text-gray-500 text-sm font-medium">{title}</h3>
+    <div className="glass-panel hover-lift rounded-2xl p-6 flex flex-col relative overflow-hidden group">
+      <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-white/0 pointer-events-none"></div>
+      <div className="flex justify-between items-start mb-4 relative z-10">
+        <h3 className="text-slate-500 text-sm font-medium">{title}</h3>
         {icon && (
           <div className={`p-2 rounded-lg ${getIconColor()}`}>
             {icon}

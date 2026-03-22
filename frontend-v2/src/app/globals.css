@@ -1,28 +1,36 @@
 @import "tailwindcss";
 
 @theme {
-  /* Colors */
-  --color-brand-ivory: #F5F0E8;
-  --color-brand-primary: #4338CA;
-  --color-brand-success: #16A34A;
-  --color-brand-warning: #EA580C;
-  --color-brand-text-primary: #1F2937;
-  --color-brand-text-secondary: #6B7280;
-
-  /* Fonts */
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --font-sans: var(--font-outfit), ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
 
 @layer base {
   :root {
-    --background: var(--color-brand-ivory);
-    --foreground: var(--color-brand-text-primary);
+    --background: #f8fafc;
+    --foreground: #0f172a;
+    --card: #ffffff;
+    --card-foreground: #0f172a;
+    --primary: #4f46e5;
+    --primary-foreground: #ffffff;
+    --border: #e2e8f0;
+    --radius: 1rem;
   }
+}
 
-  body {
-    background-color: var(--background);
-    color: var(--foreground);
-    @apply antialiased min-h-screen text-[15px] leading-relaxed;
+@layer utilities {
+  .glass-panel {
+    @apply bg-white/70 backdrop-blur-xl border border-white/40 shadow-[0_8px_30px_rgb(0,0,0,0.04)];
   }
+  .hover-lift {
+    @apply transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl hover:shadow-indigo-500/10;
+  }
+  .gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-500;
+  }
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: var(--font-sans);
 }

@@ -3,3 +3,20 @@ backend/runtime/
 **/__pycache__/
 *.pyc
 backend/models
+
+# ── Frontend ────────────────────────────
+**/node_modules/
+**/.next/
+**/out/
+**/dist/
+**/build/
+**/.env.local
+**/.env.development.local
+**/.env.test.local
+**/.env.production.local
+**/npm-debug.log*
+**/yarn-error.log*
+**/*.tsbuildinfo
+**/playwright-report/
+**/test-results/
+**/coverage/

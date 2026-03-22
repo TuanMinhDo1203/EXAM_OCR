@@ -1,36 +1,84 @@
 @import "tailwindcss";
 
+/* Design System: Material You / Neumorphic - Alabaster Academy */
 @theme {
-  --font-sans: var(--font-outfit), ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-sans: 'Plus Jakarta Sans', var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
+
+  /* Primary palette from design reference */
+  --color-background: #F2EFE9;
+  --color-surface: #F2EFE9;
+  --color-surface-container: #f6f4ea;
+  --color-surface-container-low: #fcf9f1;
+  --color-surface-container-high: #f0eee3;
+  --color-surface-container-highest: #eae9dc;
+  --color-surface-container-lowest: #ffffff;
+  --color-on-surface: #38382f;
+  --color-on-surface-variant: #65655b;
+  --color-primary: #4849da;
+  --color-primary-dim: #3b3bce;
+  --color-primary-container: #e1e0ff;
+  --color-on-primary: #faf6ff;
+  --color-on-primary-container: #3b3acd;
+  --color-secondary: #4e6b53;
+  --color-secondary-container: #caebcd;
+  --color-on-secondary-container: #3c5842;
+  --color-tertiary: #875b2d;
+  --color-tertiary-container: #fec38c;
+  --color-on-tertiary-container: #633d11;
+  --color-error: #a54731;
+  --color-error-container: #fe8b70;
+  --color-on-error-container: #742410;
+  --color-outline: #818176;
+  --color-outline-variant: #bbbaae;
 }
 
 @layer base {
-  :root {
-    --background: #f8fafc;
-    --foreground: #0f172a;
-    --card: #ffffff;
-    --card-foreground: #0f172a;
-    --primary: #4f46e5;
-    --primary-foreground: #ffffff;
-    --border: #e2e8f0;
-    --radius: 1rem;
+  body {
+    background-color: #F2EFE9;
+    color: #38382f;
+    font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
   }
 }
 
 @layer utilities {
+  /* Neumorphic lift - cards float up */
+  .neumorphic-lift {
+    box-shadow: -6px -6px 12px rgba(255, 255, 255, 0.8), 8px 8px 16px rgba(72, 73, 218, 0.06);
+  }
+  /* Neumorphic pressed - inset depth */
+  .neumorphic-pressed {
+    box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.05), inset -4px -4px 8px rgba(255, 255, 255, 0.8);
+  }
+  /* Neumorphic hover lift effect */
+  .neumorphic-hover {
+    transition: all 0.2s ease;
+  }
+  .neumorphic-hover:hover {
+    box-shadow: -12px -12px 24px rgba(255, 255, 255, 0.9), 12px 12px 24px rgba(72, 73, 218, 0.1);
+    transform: translateY(-2px);
+  }
+  /* Legacy glass-panel kept for Student screens */
   .glass-panel {
     @apply bg-white/70 backdrop-blur-xl border border-white/40 shadow-[0_8px_30px_rgb(0,0,0,0.04)];
   }
   .hover-lift {
-    @apply transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl hover:shadow-indigo-500/10;
+    @apply transition-all duration-300 ease-out hover:-translate-y-1;
   }
-  .gradient-text {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-500;
-  }
-}
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: var(--font-sans);
+  /* Material Symbols icon base style */
+  .material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    font-family: 'Material Symbols Outlined';
+    font-style: normal;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-smoothing: antialiased;
+  }
+  .icon-fill {
+    font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  }
 }

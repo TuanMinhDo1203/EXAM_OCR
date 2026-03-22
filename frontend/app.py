@@ -12,7 +12,7 @@ except Exception:
 
 st.set_page_config(page_title="Handwritten Code Grader", layout="wide")
 
-DEFAULT_BACKEND = "http://localhost:8000"
+DEFAULT_BACKEND = "http://backend:8000"
 ACE_THEME = "monokai"
 ACE_HEIGHT = 480
 
@@ -152,9 +152,11 @@ with left:
         except Exception as exc:
             st.warning(f"Could not load visualization: {exc}")
             if uploaded is not None:
-                st.image(Image.open(uploaded).convert("RGB"), use_container_width=True)
+                image = Image.open(uploaded).convert("RGB")
+                st.image(image, use_container_width=True)
     elif uploaded is not None:
-        st.image(Image.open(uploaded).convert("RGB"), use_container_width=True)
+        image = Image.open(uploaded).convert("RGB")
+        st.image(image, use_container_width=True)
     else:
         st.markdown("<div class='small-label'>Drag and drop file here</div>", unsafe_allow_html=True)
 

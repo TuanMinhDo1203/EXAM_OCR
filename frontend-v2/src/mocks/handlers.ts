@@ -74,6 +74,95 @@ export async function getMockResponse<T>(
     } as unknown as T;
   }
 
+  if (method === 'GET' && path.match(/^\/api\/exams\/[^/]+$/)) {
+    const parts = path.split('/');
+    const id = parts[parts.length - 1];
+    return {
+      id: id,
+      class_id: "cls_001",
+      title: "Advanced Calculus II",
+      subject: "Mathematics",
+      time_limit_minutes: 45,
+      qr_code_url: "https://api.qrserver.com/v1/create-qr-code/?data=" + id,
+      qr_token: "MTH402-2026",
+      status: "active",
+      total_submissions: 48,
+      total_expected: 50,
+      avg_confidence: 0.982,
+      avg_score: 76.2,
+      created_at: "2026-10-24T08:00:00Z",
+      closed_at: null,
+      submissions: [
+        {
+          id: "sub_001",
+          exam_batch_id: id,
+          student: { id: "std_001", display_name: "Alice Smith", avatar_url: "https://ui-avatars.com/api/?name=Alice+Smith" },
+          scanned_pages: 3,
+          ocr_status: "verified",
+          ai_feedback: "Great work.",
+          score: 95,
+          max_score: 100,
+          submitted_at: "2026-10-24T08:15:00Z"
+        },
+        {
+          id: "sub_002",
+          exam_batch_id: id,
+          student: { id: "std_002", display_name: "Bob Jones", avatar_url: "https://ui-avatars.com/api/?name=Bob+Jones" },
+          scanned_pages: 2,
+          ocr_status: "attention",
+          ai_feedback: "Unclear handwriting on page 2.",
+          score: 72,
+          max_score: 100,
+          submitted_at: "2026-10-24T08:16:00Z"
+        }
+      ],
+      questions: []
+    } as unknown as T;
+  }
+
+  if (method === 'GET' && path.match(/^\/api\/grades\/submission\/[^/]+$/)) {
+    const parts = path.split('/');
+    const id = parts[parts.length - 1];
+    return {
+      submission: {
+        id: id,
+        exam_batch_id: "exam_001",
+        student: { id: "std_001", display_name: "Alice Smith", avatar_url: "https://ui-avatars.com/api/?name=Alice+Smith" },
+        scanned_pages: 1,
+        ocr_status: "verified",
+        ai_feedback: "Great work.",
+        score: 95,
+        max_score: 100,
+        submitted_at: "2026-10-24T08:15:00Z"
+      },
+      pages: [
+        {
+          page_number: 1,
+          image_url: "https://via.placeholder.com/600x800.png?text=Student+Submission+Page+1",
+          ocr_text: "Let f(x) = x^2. Then f'(x) = 2x.",
+          ocr_confidence: 0.95,
+          visualization_url: "https://via.placeholder.com/600x800.png?text=Drawn+Bounding+Boxes"
+        }
+      ],
+      grades: [
+        {
+          id: "grd_001",
+          submission_id: id,
+          question_id: "q_001",
+          ai_score: 95,
+          ai_reasoning: "The student correctly applied the power rule. Deducted 5 points for not showing limits.",
+          ai_confidence: 0.92,
+          teacher_override_score: null,
+          teacher_comment: null,
+          is_human_reviewed: false,
+          created_at: "2026-10-24T08:16:00Z"
+        }
+      ],
+      total_score: 95,
+      max_possible_score: 100
+    } as unknown as T;
+  }
+
   // Fallback
   throw new Error(`Mock not implemented for ${method} ${path}`);
 }

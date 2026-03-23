@@ -3,3 +3,10 @@ backend/runtime/
 **/__pycache__/
 *.pyc
 backend/models
+*.ipynb
+/DEMO
+*.txt
+*.md
+*.env.example
+/trocr_inference_service
+onnx_export.py

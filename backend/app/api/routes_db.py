@@ -5,16 +5,16 @@ from sqlalchemy.orm import Session
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.database import get_db
-from app.models import Class, Exam, Student, Submission
+from app.models import Class, ExamBatch, Submission, User
 from app.schemas.db import (
     ClassCreate,
     ClassRead,
-    ExamCreate,
-    ExamRead,
-    StudentCreate,
-    StudentRead,
+    ExamBatchCreate,
+    ExamBatchRead,
     SubmissionCreate,
     SubmissionRead,
+    UserCreate,
+    UserRead,
 )
 
 router = APIRouter(prefix="/api", tags=["database"])
@@ -26,9 +26,42 @@ def db_health(db: Session = Depends(get_db)) -> dict:
     return {"status": "ok", "database": "azure-sql"}
 
 
+@router.post("/users", response_model=UserRead, status_code=status.HTTP_201_CREATED)
+def create_user(payload: UserCreate, db: Session = Depends(get_db)) -> User:
+    item = User(
+        email=payload.email,
+        display_name=payload.display_name,
+        avatar_url=payload.avatar_url,
+        role=payload.role,
+        google_sub=payload.google_sub,
+    )
+    db.add(item)
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="User already exists") from exc
+    db.refresh(item)
+    return item
+
+
+@router.get("/classes", response_model=list[ClassRead])
+def list_classes(db: Session = Depends(get_db)) -> list[Class]:
+    return list(db.scalars(select(Class).order_by(Class.id.desc())).all())
+
+
 @router.post("/classes", response_model=ClassRead, status_code=status.HTTP_201_CREATED)
 def create_class(payload: ClassCreate, db: Session = Depends(get_db)) -> Class:
-    item = Class(class_name=payload.class_name)
+    teacher = db.get(User, payload.teacher_id)
+    if teacher is None:
+        raise HTTPException(status_code=404, detail="Teacher not found")
+
+    item = Class(
+        name=payload.name,
+        subject=payload.subject,
+        join_code=payload.join_code,
+        teacher_id=payload.teacher_id,
+    )
     db.add(item)
     try:
         db.commit()
@@ -39,70 +72,55 @@ def create_class(payload: ClassCreate, db: Session = Depends(get_db)) -> Class:
     return item
 
 
-@router.get("/classes", response_model=list[ClassRead])
-def list_classes(db: Session = Depends(get_db)) -> list[Class]:
-    return list(db.scalars(select(Class).order_by(Class.id.desc())).all())
-
-
-@router.post("/students", response_model=StudentRead, status_code=status.HTTP_201_CREATED)
-def create_student(payload: StudentCreate, db: Session = Depends(get_db)) -> Student:
+@router.post("/exams", response_model=ExamBatchRead, status_code=status.HTTP_201_CREATED)
+def create_exam(payload: ExamBatchCreate, db: Session = Depends(get_db)) -> ExamBatch:
     class_item = db.get(Class, payload.class_id)
     if class_item is None:
         raise HTTPException(status_code=404, detail="Class not found")
+    teacher = db.get(User, payload.teacher_id)
+    if teacher is None:
+        raise HTTPException(status_code=404, detail="Teacher not found")
 
-    item = Student(
+    item = ExamBatch(
         class_id=payload.class_id,
-        student_code=payload.student_code,
-        full_name=payload.full_name,
+        teacher_id=payload.teacher_id,
+        title=payload.title,
+        time_limit_minutes=payload.time_limit_minutes,
+        qr_code_url=payload.qr_code_url,
+        qr_token=payload.qr_token,
+        status=payload.status,
     )
     db.add(item)
     try:
         db.commit()
     except IntegrityError as exc:
         db.rollback()
-        raise HTTPException(status_code=409, detail="Student code already exists") from exc
-    db.refresh(item)
-    return item
-
-
-@router.post("/exams", response_model=ExamRead, status_code=status.HTTP_201_CREATED)
-def create_exam(payload: ExamCreate, db: Session = Depends(get_db)) -> Exam:
-    class_item = db.get(Class, payload.class_id)
-    if class_item is None:
-        raise HTTPException(status_code=404, detail="Class not found")
-
-    item = Exam(
-        class_id=payload.class_id,
-        title=payload.title,
-        description=payload.description,
-        exam_date=payload.exam_date,
-    )
-    db.add(item)
-    db.commit()
+        raise HTTPException(status_code=409, detail="Exam batch already exists") from exc
     db.refresh(item)
     return item
 
 
 @router.post("/submissions", response_model=SubmissionRead, status_code=status.HTTP_201_CREATED)
 def create_submission(payload: SubmissionCreate, db: Session = Depends(get_db)) -> Submission:
-    exam_item = db.get(Exam, payload.exam_id)
+    exam_item = db.get(ExamBatch, payload.exam_batch_id)
     if exam_item is None:
-        raise HTTPException(status_code=404, detail="Exam not found")
+        raise HTTPException(status_code=404, detail="Exam batch not found")
 
-    student_item = db.get(Student, payload.student_id)
+    student_item = db.get(User, payload.student_id)
     if student_item is None:
-        raise HTTPException(status_code=404, detail="Student not found")
+        raise HTTPException(status_code=404, detail="User not found")
 
     item = Submission(
-        exam_id=payload.exam_id,
+        exam_batch_id=payload.exam_batch_id,
         student_id=payload.student_id,
         status=payload.status,
-        score=payload.score,
-        ocr_text=payload.ocr_text,
-        original_file_path=payload.original_file_path,
-        processed_file_path=payload.processed_file_path,
+        attempt_no=payload.attempt_no,
     )
     db.add(item)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="Submission already exists") from exc
     db.refresh(item)
     return item

@@ -125,9 +125,10 @@ Users ──< ClassMembers >── Classes
 | email | VARCHAR UNIQUE | Google email |
 | display_name | VARCHAR | |
 | avatar_url | VARCHAR | Google avatar |
-| role | ENUM('teacher','student') | |
+| role | ENUM('teacher','student') | Chốt đơn giản: mỗi user chỉ có 1 role cố định |
 | google_sub | VARCHAR UNIQUE | Google OAuth subject ID |
 | created_at | TIMESTAMP | |
+| updated_at | TIMESTAMP | |
 
 #### `classes`
 | Column | Type | Notes |
@@ -138,6 +139,7 @@ Users ──< ClassMembers >── Classes
 | join_code | VARCHAR(6) UNIQUE | Mã tham gia lớp (auto-gen) |
 | teacher_id | UUID (FK → users) | |
 | created_at | TIMESTAMP | |
+| updated_at | TIMESTAMP | |
 
 #### `class_members`
 | Column | Type | Notes |
@@ -145,7 +147,12 @@ Users ──< ClassMembers >── Classes
 | id | UUID (PK) | |
 | class_id | UUID (FK → classes) | |
 | student_id | UUID (FK → users) | |
+| status | ENUM('active','left','removed') | Giữ lịch sử thành viên lớp |
 | joined_at | TIMESTAMP | |
+| left_at | TIMESTAMP NULL | |
+
+**Constraints:**
+- `UNIQUE(class_id, student_id)`
 
 #### `question_bank`
 | Column | Type | Notes |
@@ -157,21 +164,25 @@ Users ──< ClassMembers >── Classes
 | expected_answer | TEXT | Đáp án mẫu (tuỳ chọn) |
 | rubric_json | JSONB | Bảng tiêu chí chấm điểm có cấu trúc |
 | rubric_text | TEXT | Rule ngôn ngữ tự nhiên để gửi cho LLM |
-| max_score | FLOAT | Điểm tối đa |
+| max_score | NUMERIC(5,2) | Điểm tối đa |
 | created_at | TIMESTAMP | |
+| updated_at | TIMESTAMP | |
 
 #### `exam_batches`
 | Column | Type | Notes |
 |---|---|---|
 | id | UUID (PK) | |
 | class_id | UUID (FK → classes) | |
+| teacher_id | UUID (FK → users) | Denormalize có chủ đích để query/audit/phân quyền dễ hơn |
 | title | VARCHAR | VD: "Kiểm tra 15p - Tuần 5" |
 | time_limit_minutes | INT | |
 | qr_code_url | VARCHAR | URL mã QR sinh ra |
 | qr_token | VARCHAR UNIQUE | Token ngắn nhúng trong QR |
 | status | ENUM('draft','active','closed','finalized') | |
 | created_at | TIMESTAMP | |
-| closed_at | TIMESTAMP | |
+| updated_at | TIMESTAMP | |
+| closed_at | TIMESTAMP NULL | |
+| finalized_at | TIMESTAMP NULL | |
 
 #### `exam_questions`
 | Column | Type | Notes |
@@ -180,6 +191,12 @@ Users ──< ClassMembers >── Classes
 | exam_batch_id | UUID (FK → exam_batches) | |
 | question_id | UUID (FK → question_bank) | |
 | order_index | INT | Thứ tự câu hỏi trong đề |
+| prompt_snapshot | TEXT | Snapshot nội dung câu hỏi tại thời điểm publish exam |
+| rubric_snapshot | TEXT | Snapshot rubric dùng để chấm kỳ thi này |
+| max_score_snapshot | NUMERIC(5,2) | Snapshot điểm tối đa |
+
+**Constraints:**
+- `UNIQUE(exam_batch_id, order_index)`
 
 #### `submissions`
 | Column | Type | Notes |
@@ -188,7 +205,13 @@ Users ──< ClassMembers >── Classes
 | exam_batch_id | UUID (FK → exam_batches) | |
 | student_id | UUID (FK → users) | |
 | status | ENUM('uploaded','ocr_processing','ocr_done','grading','needs_review','graded') | |
+| attempt_no | INT DEFAULT 1 | Chốt hiện tại: hệ thống ưu tiên 1 bài nộp / học sinh / kỳ thi |
 | submitted_at | TIMESTAMP | |
+| created_at | TIMESTAMP | |
+| updated_at | TIMESTAMP | |
+
+**Constraints:**
+- `UNIQUE(exam_batch_id, student_id)`
 
 #### `submission_pages`
 | Column | Type | Notes |
@@ -198,22 +221,47 @@ Users ──< ClassMembers >── Classes
 | page_number | INT | |
 | image_url | VARCHAR | URL ảnh trên Cloud Storage |
 | ocr_text | TEXT | Text trích xuất bởi TrOCR |
-| ocr_confidence | FLOAT | Độ tự tin trung bình của OCR |
+| ocr_confidence | NUMERIC(5,4) | Độ tự tin trung bình của OCR |
 | visualization_url | VARCHAR | URL ảnh vẽ bounding boxes |
+| created_at | TIMESTAMP | |
+
+**Constraints:**
+- `UNIQUE(submission_id, page_number)`
+
+#### `submission_answers`
+| Column | Type | Notes |
+|---|---|---|
+| id | UUID (PK) | |
+| submission_id | UUID (FK → submissions) | |
+| exam_question_id | UUID (FK → exam_questions) | |
+| aggregated_text | TEXT | Nội dung OCR đã gom theo từng câu |
+| ai_confidence | NUMERIC(5,4) | Độ tự tin của bước tách câu/trích câu trả lời |
+| needs_review | BOOLEAN DEFAULT FALSE | |
+| created_at | TIMESTAMP | |
+| updated_at | TIMESTAMP | |
+
+**Mục đích:** nối lớp dữ liệu giữa `submission_pages` và `grades`, để resolution desk biết AI đang chấm phần nào của bài làm.
 
 #### `grades`
 | Column | Type | Notes |
 |---|---|---|
 | id | UUID (PK) | |
 | submission_id | UUID (FK → submissions) | |
-| question_id | UUID (FK → question_bank) | |
-| ai_score | FLOAT | Điểm LLM Agent đề xuất |
+| exam_question_id | UUID (FK → exam_questions) | Chấm theo câu hỏi đã được snapshot vào exam |
+| submission_answer_id | UUID (FK → submission_answers) | |
+| ai_score | NUMERIC(5,2) | Điểm LLM Agent đề xuất |
 | ai_reasoning | TEXT | Lý do chấm điểm của AI |
-| ai_confidence | FLOAT | Độ tự tin của Agent |
-| teacher_override_score | FLOAT | Giáo viên sửa lại (nếu có) |
+| ai_confidence | NUMERIC(5,4) | Độ tự tin của Agent |
+| teacher_override_score | NUMERIC(5,2) | Giáo viên sửa lại (nếu có) |
 | teacher_comment | TEXT | Lời phê bổ sung |
 | is_human_reviewed | BOOLEAN DEFAULT FALSE | |
+| reviewed_by | UUID (FK → users) NULL | Giáo viên đã duyệt/sửa |
+| reviewed_at | TIMESTAMP NULL | |
 | created_at | TIMESTAMP | |
+| updated_at | TIMESTAMP | |
+
+**Constraints:**
+- `UNIQUE(submission_id, exam_question_id)`
 
 ---
 

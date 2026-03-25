@@ -25,6 +25,8 @@ services:
     ports:
       - "${FRONTEND_PORT:-3000}:3000"
     environment:
+      PORT: "3000"
+      HOSTNAME: "0.0.0.0"
       NEXT_PUBLIC_USE_MOCKS: "false"
       NEXT_PUBLIC_API_URL: ""
     depends_on:

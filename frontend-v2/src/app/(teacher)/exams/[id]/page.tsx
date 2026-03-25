@@ -56,6 +56,10 @@ export default function BatchDetailsPage({ params }: { params: Promise<{ id: str
   );
   if (!examDetail) return <div className="p-8" style={{ color: '#a54731' }}>Exam not found</div>;
   const currentExam = examDetail;
+  const submitUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}/submit/${examDetail.qr_token}`
+    : `/submit/${examDetail.qr_token}`;
+  const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(submitUrl)}`;
 
   const confidencePct = Math.round(currentExam.avg_confidence * 100);
   const flaggedCount = currentExam.submissions?.filter((s: any) => s.ocr_status === 'attention').length ?? 0;
@@ -176,9 +180,7 @@ export default function BatchDetailsPage({ params }: { params: Promise<{ id: str
               Học sinh quét QR hoặc mở link submit để nộp bài vào đúng exam batch này.
             </p>
             <div className="rounded-xl px-4 py-3 text-sm font-medium" style={{ background: '#fcf9f1', color: '#38382f' }}>
-              {typeof window !== 'undefined'
-                ? `${window.location.origin}/submit/${examDetail.qr_token}`
-                : `/submit/${examDetail.qr_token}`}
+              {submitUrl}
             </div>
           </div>
 
@@ -186,9 +188,9 @@ export default function BatchDetailsPage({ params }: { params: Promise<{ id: str
             <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: '#65655b' }}>
               QR Code
             </span>
-            {examDetail.qr_code_url ? (
+            {qrImageUrl ? (
               <img
-                src={examDetail.qr_code_url}
+                src={qrImageUrl}
                 alt={`QR for ${examDetail.title}`}
                 className="w-48 h-48 rounded-2xl border border-slate-200 bg-white p-3"
               />

@@ -6,6 +6,21 @@ export interface SubmitExamInfo {
   time_limit_minutes: number;
   status: string;
   class_name: string;
+  teacher_name?: string | null;
+}
+
+async function extractSubmitError(res: Response): Promise<string> {
+  const contentType = res.headers.get('content-type') || '';
+  if (contentType.includes('application/json')) {
+    const payload = await res.json().catch(() => null);
+    if (payload && typeof payload === 'object' && 'detail' in payload) {
+      const detail = payload.detail;
+      if (typeof detail === 'string' && detail.trim()) {
+        return detail;
+      }
+    }
+  }
+  return res.text();
 }
 
 export interface SubmitStudentValidation {
@@ -28,7 +43,7 @@ export interface SubmitUploadResponse {
 export async function fetchSubmitExamInfo(token: string): Promise<SubmitExamInfo> {
   const res = await fetch(`${API_BASE_URL}/api/submit/${token}`);
   if (!res.ok) {
-    throw new ApiError(res.status, await res.text());
+    throw new ApiError(res.status, await extractSubmitError(res));
   }
   return res.json();
 }
@@ -62,7 +77,7 @@ export async function uploadSubmission(token: string, imageDataUrl: string, stud
   });
 
   if (!res.ok) {
-    throw new ApiError(res.status, await res.text());
+    throw new ApiError(res.status, await extractSubmitError(res));
   }
 
   return res.json();

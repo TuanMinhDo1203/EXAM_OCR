@@ -74,6 +74,7 @@ class SubmitExamInfoResponse(BaseModel):
     time_limit_minutes: int
     status: str
     class_name: str
+    teacher_name: str | None = None
 
 
 class SubmitStudentValidationResponse(BaseModel):

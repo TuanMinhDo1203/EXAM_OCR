@@ -96,6 +96,7 @@ def validate_qr_token(qr_token: str, db: Session = Depends(get_db)) -> SubmitExa
     )
     if exam is None:
         raise HTTPException(status_code=404, detail="Exam token not found")
+    teacher = db.get(User, exam.teacher_id) if exam.teacher_id else None
 
     return SubmitExamInfoResponse(
         exam_title=exam.title,
@@ -103,6 +104,7 @@ def validate_qr_token(qr_token: str, db: Session = Depends(get_db)) -> SubmitExa
         time_limit_minutes=exam.time_limit_minutes,
         status=exam.status,
         class_name=exam.class_.name,
+        teacher_name=teacher.display_name if teacher else None,
     )
 
 

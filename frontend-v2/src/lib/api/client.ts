@@ -15,6 +15,20 @@ function getAuthHeaders(): HeadersInit {
   };
 }
 
+async function extractErrorMessage(res: Response): Promise<string> {
+  const contentType = res.headers.get('content-type') || '';
+  if (contentType.includes('application/json')) {
+    const payload = await res.json().catch(() => null);
+    if (payload && typeof payload === 'object' && 'detail' in payload) {
+      const detail = payload.detail;
+      if (typeof detail === 'string' && detail.trim()) {
+        return detail;
+      }
+    }
+  }
+  return res.text();
+}
+
 export async function apiClient<T>(
   method: string,
   path: string,
@@ -34,7 +48,7 @@ export async function apiClient<T>(
   });
 
   if (!res.ok) {
-    throw new ApiError(res.status, await res.text());
+    throw new ApiError(res.status, await extractErrorMessage(res));
   }
 
   // Handle empty responses

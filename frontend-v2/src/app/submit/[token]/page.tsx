@@ -19,8 +19,19 @@ export default function StudentLandingPage({ params }: { params: Promise<{ token
       try {
         const result = await fetchSubmitExamInfo(token);
         setExamInfo(result);
+        setError(null);
       } catch (err) {
         console.error(err);
+        if (err instanceof ApiError) {
+          const message = err.message.toLowerCase();
+          if (message.includes('exam token not found')) {
+            setError('Không tìm thấy bài kiểm tra tương ứng với mã QR này.');
+          } else {
+            setError('Không tải được thông tin bài kiểm tra.');
+          }
+        } else {
+          setError('Không tải được thông tin bài kiểm tra.');
+        }
       } finally {
         setLoading(false);
       }
@@ -36,6 +47,10 @@ export default function StudentLandingPage({ params }: { params: Promise<{ token
     const normalized = studentEmail.trim().toLowerCase();
     if (!normalized || !normalized.includes('@')) {
       setError('Vui lòng nhập email hợp lệ trước khi tiếp tục.');
+      return;
+    }
+    if (!examInfo) {
+      setError('Không tải được thông tin bài kiểm tra nên chưa thể tiếp tục.');
       return;
     }
     setIsValidating(true);
@@ -95,7 +110,7 @@ export default function StudentLandingPage({ params }: { params: Promise<{ token
           <div className="glass-panel hover-lift w-full p-5 mt-8 rounded-2xl space-y-4">
              <div className="flex justify-between items-center text-sm">
                 <span className="text-slate-500 font-medium">Instructor</span>
-                <span className="text-slate-900 font-bold">{examInfo?.class_name || 'Class Session'}</span>
+                <span className="text-slate-900 font-bold">{examInfo?.teacher_name || examInfo?.class_name || 'Class Session'}</span>
              </div>
              <div className="border-t border-slate-100"></div>
              <div className="flex justify-between items-center text-sm">
@@ -137,7 +152,7 @@ export default function StudentLandingPage({ params }: { params: Promise<{ token
              <button
                type="button"
                onClick={handleContinue}
-               disabled={isValidating}
+               disabled={isValidating || !examInfo}
                className="w-full flex items-center justify-center py-4 rounded-xl font-bold bg-indigo-600 text-white shadow-lg shadow-indigo-500/30 hover:bg-indigo-700 transition-all hover:-translate-y-1"
              >
                  {isValidating ? 'Đang kiểm tra email...' : 'Continue to Upload'}

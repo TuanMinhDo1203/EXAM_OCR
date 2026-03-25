@@ -10,7 +10,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=str(PROJECT_ROOT / ".env"),
+        env_file=str(PROJECT_ROOT / "deployment" / ".env"),
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",
@@ -27,20 +27,31 @@ class Settings(BaseSettings):
     auto_create_db_schema: bool = False
 
     device: Literal["auto", "cpu", "cuda"] = "auto"
+    ocr_inference_mode: Literal["local", "remote"] = "local"
+    ocr_job_backend: Literal["thread", "celery"] = "thread"
+    remote_ocr_url: str | None = None
+    remote_ocr_timeout_seconds: int = 60
+    redis_url: str = "redis://127.0.0.1:6379/0"
+    celery_broker_url: str | None = None
+    celery_result_backend: str | None = None
     max_upload_mb: int = 10
     allowed_extensions: tuple[str, ...] = (".png", ".jpg", ".jpeg")
 
     yolo_model_path: str = "backend/models/YOLO/best_phase2_143.pt"
     resnet_model_path: str = "backend/models/Resnet/resnet18_text_cls.pth"
     trocr_model_path: str = "backend/models/trocr_handwritten_decoder_only_best_S1"
+    resnet_openvino_model_path: str = "backend/models/resnet_openvino/resnet18_text_cls.xml"
+    trocr_openvino_dir: str = "backend/models/trocr_openvino"
 
     yolo_conf: float = 0.6
     yolo_iou: float = 0.5
     yolo_min_conf: float = 0.25
     trocr_max_tokens: int = 128
     trocr_num_beams: int = 5
-    classification_batch_size: int = 16
-    trocr_batch_size: int = 8
+    enable_trocr_fp16: bool = False
+    enable_dynamic_quantization: bool = False
+    quantize_trocr: bool = True
+    quantize_resnet: bool = True
     pad_x: int = 10
     pad_y: int = 6
     indent_cluster_eps: int = 15
@@ -48,6 +59,9 @@ class Settings(BaseSettings):
     max_image_dim: int = 1600
     save_uploads: bool = False
     save_visualizations: bool = True
+    azure_blob_container_url: str | None = None
+    azure_blob_upload_prefix: str = "uploads"
+    azure_blob_output_prefix: str = "outputs"
 
     enable_grading: bool = False
     internal_grading_only: bool = True
@@ -76,6 +90,18 @@ class Settings(BaseSettings):
     @property
     def max_upload_bytes(self) -> int:
         return self.max_upload_mb * 1024 * 1024
+
+    @property
+    def use_azure_blob_storage(self) -> bool:
+        return bool(self.azure_blob_container_url)
+
+    @property
+    def resolved_celery_broker_url(self) -> str:
+        return self.celery_broker_url or self.redis_url
+
+    @property
+    def resolved_celery_result_backend(self) -> str:
+        return self.celery_result_backend or self.redis_url
 
     def resolve_path(self, value: str) -> Path:
         path = Path(value)

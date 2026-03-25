@@ -1,3 +1,8 @@
+from __future__ import annotations
+
+import io
+
+import httpx
 import numpy as np
 import torch
 from PIL import Image, ImageOps
@@ -16,15 +21,58 @@ def pad_crop(crop: Image.Image, settings: Settings, fill_color: tuple[int, int, 
     )
 
 
-def ocr_crops(processor, trocr, device: str, image: Image.Image, boxes: list[list[float]], settings: Settings) -> list[str]:
+def _resolve_remote_ocr_endpoint(settings: Settings) -> str:
+    if not settings.remote_ocr_url:
+        raise RuntimeError("Remote OCR URL is not configured")
+    endpoint = settings.remote_ocr_url.rstrip("/")
+    if endpoint.endswith("/predict"):
+        return endpoint
+    return f"{endpoint}/predict"
+
+
+def _ocr_crop_remote(crop: Image.Image, settings: Settings) -> str:
+    endpoint = _resolve_remote_ocr_endpoint(settings)
+    payload = io.BytesIO()
+    crop.save(payload, format="PNG")
+    payload.seek(0)
+    with httpx.Client(timeout=settings.remote_ocr_timeout_seconds) as client:
+        response = client.post(
+            endpoint,
+            files={"file": ("crop.png", payload.getvalue(), "image/png")},
+        )
+        response.raise_for_status()
+        data = response.json()
+    return (data.get("recognized_text") or data.get("text") or "").strip()
+
+
+def ocr_crops(
+    processor,
+    trocr,
+    device: str,
+    image: Image.Image,
+    boxes: list[list[float]],
+    settings: Settings,
+    inference_mode: str = "local",
+) -> list[str]:
     texts: list[str] = []
+    if not boxes:
+        return texts
+
     for box in boxes:
         x1, y1, x2, y2 = [int(max(0, value)) for value in box]
         crop = pad_crop(image.crop((x1, y1, x2, y2)), settings=settings)
-        pixel_values = processor(images=crop, return_tensors="pt").pixel_values.to(device)
-        with torch.no_grad():
+        if inference_mode == "remote":
+            texts.append(_ocr_crop_remote(crop, settings))
+            continue
+
+        inputs = processor(images=crop, return_tensors="pt")
+        if device == "cuda":
+            inputs = {key: value.to(device) for key, value in inputs.items()}
+            if settings.enable_trocr_fp16:
+                inputs["pixel_values"] = inputs["pixel_values"].half()
+        with torch.inference_mode():
             generated_ids = trocr.generate(
-                pixel_values,
+                **inputs,
                 num_beams=settings.trocr_num_beams,
                 max_new_tokens=settings.trocr_max_tokens,
                 early_stopping=True,

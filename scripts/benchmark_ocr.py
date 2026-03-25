@@ -24,7 +24,6 @@ except Exception:  # pragma: no cover
 
 from app.core.config import get_settings
 from app.core.model_registry import ModelRegistry
-from app.services.ocr_pipeline_baseline import OCRPipelineBaselineService
 from app.services.ocr_pipeline import OCRPipelineService
 from app.services.classification import classify_crops
 from app.services.detection import detect_boxes
@@ -200,8 +199,8 @@ def main() -> None:
     parser.add_argument("--images", nargs="+", required=True, help="One or more image paths")
     parser.add_argument(
         "--mode",
-        choices=["baseline", "optimized", "openvino", "both", "all"],
-        default="both",
+        choices=["optimized", "openvino", "both", "all"],
+        default="optimized",
         help="Which pipeline version to benchmark",
     )
     parser.add_argument(
@@ -264,8 +263,6 @@ def main() -> None:
     registry = ModelRegistry(settings)
     registry.load()
     services: list[tuple[str, object]] = []
-    if args.mode in {"baseline", "both", "all"}:
-        services.append(("baseline", OCRPipelineBaselineService(registry, settings)))
     if args.mode in {"optimized", "both", "all"}:
         services.append(("optimized", OCRPipelineService(registry, settings)))
 

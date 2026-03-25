@@ -6,17 +6,17 @@ from app.core.logger import get_logger
 
 try:
     import torch
-    import torch.nn as nn
-    from torchvision import models, transforms
-    from transformers import TrOCRProcessor, VisionEncoderDecoderModel
+    import openvino as ov
+    from optimum.intel import OVModelForVision2Seq
+    from torchvision import transforms
+    from transformers import TrOCRProcessor
     from ultralytics import YOLO
 except Exception:  # pragma: no cover
     torch = None
-    nn = None
-    models = None
+    ov = None
+    OVModelForVision2Seq = None
     transforms = None
     TrOCRProcessor = None
-    VisionEncoderDecoderModel = None
     YOLO = None
 
 
@@ -58,11 +58,10 @@ class ModelRegistry:
             name
             for name, value in {
                 "torch": torch,
-                "torch.nn": nn,
-                "torchvision.models": models,
+                "openvino": ov,
+                "optimum.intel.OVModelForVision2Seq": OVModelForVision2Seq,
                 "torchvision.transforms": transforms,
                 "transformers.TrOCRProcessor": TrOCRProcessor,
-                "transformers.VisionEncoderDecoderModel": VisionEncoderDecoderModel,
                 "ultralytics.YOLO": YOLO,
             }.items()
             if value is None
@@ -71,39 +70,23 @@ class ModelRegistry:
             self._load_error = f"Missing ML dependencies: {', '.join(missing)}"
             raise RuntimeError(self._load_error)
 
-        device = self._resolve_device()
-        self.logger.info("Loading OCR models on device=%s", device)
+        device = "cpu"
+        self.logger.info("Loading local OCR models on device=%s", device)
 
         yolo = YOLO(str(self.settings.resolve_path(self.settings.yolo_model_path)))
 
         processor = TrOCRProcessor.from_pretrained(
-            str(self.settings.resolve_path(self.settings.trocr_model_path))
+            str(self.settings.resolve_path(self.settings.trocr_openvino_dir)),
+            use_fast=True
         )
-        trocr = VisionEncoderDecoderModel.from_pretrained(
-            str(self.settings.resolve_path(self.settings.trocr_model_path))
-        ).to(device)
-        trocr.eval()
-
-        checkpoint = torch.load(
-            str(self.settings.resolve_path(self.settings.resnet_model_path)),
-            map_location=device,
+        trocr = OVModelForVision2Seq.from_pretrained(
+            str(self.settings.resolve_path(self.settings.trocr_openvino_dir)),
+            device="CPU",
         )
-        state_dict = checkpoint["model"] if "model" in checkpoint else checkpoint
 
-        resnet = models.resnet18(weights=None)
-        if "fc.1.weight" in state_dict:
-            num_classes = state_dict["fc.1.weight"].shape[0]
-            resnet.fc = nn.Sequential(
-                nn.Dropout(0.5),
-                nn.Linear(resnet.fc.in_features, num_classes),
-            )
-        else:
-            num_classes = state_dict["fc.weight"].shape[0]
-            resnet.fc = nn.Linear(resnet.fc.in_features, num_classes)
-
-        resnet.load_state_dict(state_dict)
-        resnet = resnet.to(device)
-        resnet.eval()
+        core = ov.Core()
+        resnet_model = core.read_model(str(self.settings.resolve_path(self.settings.resnet_openvino_model_path)))
+        resnet = core.compile_model(resnet_model, "CPU")
 
         resnet_transform = transforms.Compose(
             [
@@ -124,12 +107,3 @@ class ModelRegistry:
         self._load_error = None
         self.logger.info("Models loaded successfully")
         return self._models
-
-    def _resolve_device(self) -> str:
-        if self.settings.device == "cpu":
-            return "cpu"
-        if self.settings.device == "cuda":
-            return "cuda"
-        if torch is not None and torch.cuda.is_available():
-            return "cuda"
-        return "cpu"

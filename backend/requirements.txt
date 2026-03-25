@@ -1,6 +1,11 @@
 fastapi==0.116.1
+azure-storage-blob
+celery[redis]
 httpx==0.28.1
 numpy
+openvino
+openpyxl
+optimum-intel
 pillow
 pyodbc==5.2.0
 pydantic-settings==2.10.1

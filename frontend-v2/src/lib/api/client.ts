@@ -6,7 +6,7 @@ export class ApiError extends Error {
 }
 
 const USE_MOCKS = process.env.NEXT_PUBLIC_USE_MOCKS === 'true';
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
 function getAuthHeaders(): HeadersInit {
   // In a real app, this might come from next-auth or a cookie

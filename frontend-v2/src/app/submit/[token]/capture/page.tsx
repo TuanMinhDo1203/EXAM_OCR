@@ -1,11 +1,27 @@
 'use client';
 
-import React, { use, useState } from 'react';
+import React, { use, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function CameraCapturePage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = use(params);
   const [capturing, setCapturing] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const cameraInputRef = useRef<HTMLInputElement | null>(null);
+  const router = useRouter();
+
+  async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      sessionStorage.setItem(`submit-image:${token}`, String(reader.result || ''));
+      setCapturing(true);
+      router.push(`/submit/${token}/confirm`);
+    };
+    reader.readAsDataURL(file);
+  }
 
   return (
     <div className="flex-1 flex flex-col bg-black relative">
@@ -38,9 +54,37 @@ export default function CameraCapturePage({ params }: { params: Promise<{ token:
 
        {/* Bottom Controls */}
        <div className="absolute inset-x-0 bottom-0 p-8 flex flex-col items-center justify-end bg-gradient-to-t from-black/90 via-black/50 to-transparent z-10">
-           <Link href={`/submit/${token}/confirm`} className={`w-20 h-20 rounded-full border-4 border-white flex items-center justify-center mb-6 transition-all ${capturing ? 'scale-90 bg-white' : 'bg-white/20 hover:bg-white/40'}`} onClick={() => setCapturing(true)}>
-               <div className="w-16 h-16 bg-white rounded-full"></div>
-           </Link>
+           <input
+             ref={fileInputRef}
+             type="file"
+             accept="image/*"
+             className="hidden"
+             onChange={handleFileChange}
+           />
+           <input
+             ref={cameraInputRef}
+             type="file"
+             accept="image/*"
+             capture="environment"
+             className="hidden"
+             onChange={handleFileChange}
+           />
+           <div className="flex items-center gap-4 mb-6">
+             <button
+               type="button"
+               className="px-5 py-3 rounded-xl border border-white/30 bg-white/10 text-white font-semibold backdrop-blur-sm transition-all hover:bg-white/20"
+               onClick={() => fileInputRef.current?.click()}
+             >
+               Chọn từ máy
+             </button>
+             <button
+               type="button"
+               className={`w-20 h-20 rounded-full border-4 border-white flex items-center justify-center transition-all ${capturing ? 'scale-90 bg-white' : 'bg-white/20 hover:bg-white/40'}`}
+               onClick={() => cameraInputRef.current?.click()}
+             >
+                 <div className="w-16 h-16 bg-white rounded-full"></div>
+             </button>
+           </div>
            <p className="text-white text-sm font-medium">Ensure lighting is good and text is readable</p>
        </div>
     </div>

@@ -12,3 +12,18 @@ export async function overrideGrade(gradeId: string, score: number, comment?: st
     teacher_comment: comment
   });
 }
+
+export interface SubmissionPageUpdate {
+  id: string;
+  page_number: number;
+  image_url: string;
+  ocr_text: string;
+  ocr_confidence: number;
+  visualization_url: string | null;
+}
+
+export async function updateSubmissionPageOcrText(pageId: string, ocrText: string): Promise<SubmissionPageUpdate> {
+  return apiClient<SubmissionPageUpdate>('PATCH', `/api/grades/submission-pages/${pageId}/ocr-text`, {
+    ocr_text: ocrText,
+  });
+}

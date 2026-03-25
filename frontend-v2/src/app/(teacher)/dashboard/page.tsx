@@ -15,28 +15,76 @@ const subjectIcon: Record<string, string> = {
   English: 'menu_book',
 };
 
+function buildSparklinePath(values: number[], width = 100, height = 40, baseline = height - 5) {
+  if (!values.length) {
+    return {
+      linePath: `M0 ${baseline} L${width} ${baseline}`,
+      areaPath: `M0 ${baseline} L${width} ${baseline} L${width} ${height} L0 ${height} Z`,
+    };
+  }
+
+  const maxValue = Math.max(...values, 1);
+  const minValue = Math.min(...values, 0);
+  const range = Math.max(maxValue - minValue, 1);
+  const step = values.length === 1 ? width : width / (values.length - 1);
+
+  const points = values.map((value, index) => {
+    const x = Number((index * step).toFixed(2));
+    const y = Number((height - 5 - ((value - minValue) / range) * (height - 10)).toFixed(2));
+    return { x, y };
+  });
+
+  const linePath = points.reduce(
+    (path, point, index) => `${path}${index === 0 ? 'M' : ' L'}${point.x} ${point.y}`,
+    '',
+  );
+  const areaPath = `${linePath} L${points[points.length - 1].x} ${height} L${points[0].x} ${height} Z`;
+  return { linePath, areaPath };
+}
+
 export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [exams, setExams] = useState<Exam[]>([]);
   const [activeTab, setActiveTab] = useState<'open' | 'completed'>('open');
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
-    async function loadData() {
+    let cancelled = false;
+
+    async function loadData(isInitial = false) {
       try {
+        if (isInitial) {
+          setLoading(true);
+        } else {
+          setRefreshing(true);
+        }
         const [statsData, examsData] = await Promise.all([
           fetchDashboardStats(),
           fetchExams(),
         ]);
+        if (cancelled) return;
         setStats(statsData);
         setExams(examsData.data);
       } catch (error) {
         console.error('Failed to load dashboard data', error);
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+          setRefreshing(false);
+        }
       }
     }
-    loadData();
+
+    loadData(true);
+    const intervalId = window.setInterval(() => {
+      loadData(false);
+    }, 8000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
   }, []);
 
   if (loading) {
@@ -52,6 +100,15 @@ export default function DashboardPage() {
   );
 
   const urgentCount = stats?.confidence_risk?.filter((r) => r.level === 'critical').length ?? 0;
+  const recentExams = [...exams]
+    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+    .slice(-6);
+  const submissionTrendValues = recentExams.map((exam) =>
+    exam.total_expected > 0 ? Number(((exam.total_submissions / exam.total_expected) * 100).toFixed(2)) : exam.total_submissions,
+  );
+  const scoreTrendValues = recentExams.map((exam) => Number(exam.avg_score || 0));
+  const submissionTrend = buildSparklinePath(submissionTrendValues);
+  const scoreTrend = buildSparklinePath(scoreTrendValues);
 
   return (
     <div className="p-6 md:p-10 max-w-7xl mx-auto space-y-10">
@@ -77,6 +134,9 @@ export default function DashboardPage() {
             </h1>
             <p className="font-medium mt-1" style={{ color: '#65655b' }}>
               AI confidence levels are below threshold for manual verification.
+            </p>
+            <p className="text-xs mt-2" style={{ color: '#818176' }}>
+              {refreshing ? 'Refreshing dashboard...' : 'Dashboard auto-refreshes every 8 seconds.'}
             </p>
           </div>
         </div>
@@ -112,8 +172,8 @@ export default function DashboardPage() {
             {/* Mini sparkline */}
             <div className="flex-1 flex items-center justify-center overflow-hidden h-20">
               <svg className="w-full h-full" viewBox="0 0 100 40" style={{ color: '#4849da' }}>
-                <path d="M0 35 Q 20 35, 40 10 T 70 20 T 100 5" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="3" />
-                <path d="M0 35 Q 20 35, 40 10 T 70 20 T 100 5 L 100 40 L 0 40 Z" fill="currentColor" opacity="0.08" />
+                <path d={submissionTrend.linePath} fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" />
+                <path d={submissionTrend.areaPath} fill="currentColor" opacity="0.08" />
               </svg>
             </div>
             <p className="text-xl font-black">
@@ -157,8 +217,8 @@ export default function DashboardPage() {
             <h3 className="text-sm font-bold" style={{ color: '#65655b' }}>Score Dist.</h3>
             <div className="flex-1 flex items-center justify-center overflow-hidden">
               <svg className="w-full h-20" viewBox="0 0 100 40" style={{ color: '#4849da' }}>
-                <path d="M0 35 Q 20 35, 40 15 T 80 5 T 100 25" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="3" />
-                <path d="M0 35 Q 20 35, 40 15 T 80 5 T 100 25 L 100 40 L 0 40 Z" fill="currentColor" opacity="0.08" />
+                <path d={scoreTrend.linePath} fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" />
+                <path d={scoreTrend.areaPath} fill="currentColor" opacity="0.08" />
               </svg>
             </div>
             <div className="flex justify-between items-baseline">
@@ -244,7 +304,9 @@ export default function DashboardPage() {
             </thead>
             <tbody>
               {filteredExams.map((exam) => {
-                const progressFill = Math.round((exam.total_submissions / exam.total_expected) * 4);
+                const progressFill = exam.total_expected > 0
+                  ? Math.round((exam.total_submissions / exam.total_expected) * 4)
+                  : 0;
                 const confidencePct = Math.round(exam.avg_confidence * 100);
                 const isActive = exam.status === 'active';
                 const icon = subjectIcon[exam.subject] || 'school';

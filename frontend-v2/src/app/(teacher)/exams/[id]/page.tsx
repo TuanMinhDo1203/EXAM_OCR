@@ -3,25 +3,50 @@
 
 import React, { useEffect, useState, use } from 'react';
 import Link from 'next/link';
-import { fetchExamDetail, ExamDetail } from '@/lib/api/exams';
+import { deleteSubmission, exportExamCsv, fetchExamDetail, finalizeExam, ExamDetail } from '@/lib/api/exams';
 
 export default function BatchDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [examDetail, setExamDetail] = useState<ExamDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [finalizing, setFinalizing] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string; studentName: string } | null>(null);
+  const [deletingSubmissionId, setDeletingSubmissionId] = useState<string | null>(null);
 
   useEffect(() => {
-    async function load() {
+    let cancelled = false;
+
+    async function load(isInitial = false) {
       try {
+        if (isInitial) {
+          setLoading(true);
+        } else {
+          setRefreshing(true);
+        }
         const data = await fetchExamDetail(id);
+        if (cancelled) return;
         setExamDetail(data);
       } catch (err) {
         console.error(err);
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+          setRefreshing(false);
+        }
       }
     }
-    load();
+
+    load(true);
+    const intervalId = window.setInterval(() => {
+      load(false);
+    }, 5000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
   }, [id]);
 
   if (loading) return (
@@ -30,9 +55,59 @@ export default function BatchDetailsPage({ params }: { params: Promise<{ id: str
     </div>
   );
   if (!examDetail) return <div className="p-8" style={{ color: '#a54731' }}>Exam not found</div>;
+  const currentExam = examDetail;
 
-  const confidencePct = Math.round(examDetail.avg_confidence * 100);
-  const flaggedCount = examDetail.submissions?.filter((s: any) => s.ocr_status === 'attention').length ?? 0;
+  const confidencePct = Math.round(currentExam.avg_confidence * 100);
+  const flaggedCount = currentExam.submissions?.filter((s: any) => s.ocr_status === 'attention').length ?? 0;
+
+  async function handleExportCsv() {
+    setExporting(true);
+    try {
+      await exportExamCsv(currentExam.id, currentExam.qr_token);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setExporting(false);
+    }
+  }
+
+  async function handleFinalizeBatch() {
+    if (currentExam.status === 'finalized') return;
+    const confirmed = window.confirm('Finalize this batch? Students will no longer be able to submit.');
+    if (!confirmed) return;
+
+    setFinalizing(true);
+    try {
+      const updated = await finalizeExam(currentExam.id);
+      setExamDetail((current) => (current ? { ...current, ...updated } : current));
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setFinalizing(false);
+    }
+  }
+
+  async function handleDeleteSubmission() {
+    if (!confirmDelete) return;
+    setDeletingSubmissionId(confirmDelete.id);
+    try {
+      await deleteSubmission(currentExam.id, confirmDelete.id);
+      setExamDetail((current) => {
+        if (!current) return current;
+        const nextSubmissions = (current.submissions || []).filter((item: any) => item.id !== confirmDelete.id);
+        return {
+          ...current,
+          submissions: nextSubmissions,
+          total_submissions: nextSubmissions.length,
+        };
+      });
+      setConfirmDelete(null);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setDeletingSubmissionId(null);
+    }
+  }
 
   return (
     <div className="p-6 md:p-10 max-w-7xl mx-auto space-y-10">
@@ -50,22 +125,86 @@ export default function BatchDetailsPage({ params }: { params: Promise<{ id: str
             <p className="text-sm mt-1" style={{ color: '#65655b' }}>
               {examDetail.subject} • Token: {examDetail.qr_token} • Created: {new Date(examDetail.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
             </p>
+            <p className="text-xs mt-2" style={{ color: '#818176' }}>
+              {refreshing ? 'Refreshing submissions...' : 'Submission status auto-refreshes every 5 seconds.'}
+            </p>
           </div>
           <div className="flex space-x-3">
             <button
+              type="button"
+              onClick={handleExportCsv}
+              disabled={exporting}
               className="px-6 py-3 font-bold text-sm rounded-full neumorphic-lift hover:opacity-80 transition-all active:scale-95 flex items-center space-x-2"
               style={{ background: '#f0eee3', color: '#38382f' }}
             >
               <span className="material-symbols-outlined text-lg">download</span>
-              <span>Export CSV</span>
+              <span>{exporting ? 'Exporting...' : 'Export CSV'}</span>
             </button>
             <button
+              type="button"
+              onClick={handleFinalizeBatch}
+              disabled={finalizing || examDetail.status === 'finalized'}
               className="px-6 py-3 font-bold text-sm rounded-full shadow-lg hover:brightness-110 transition-all active:scale-95 flex items-center space-x-2"
-              style={{ background: 'linear-gradient(135deg, #4849da, #3b3bce)', color: '#faf6ff' }}
+              style={{
+                background: examDetail.status === 'finalized'
+                  ? '#94a3b8'
+                  : 'linear-gradient(135deg, #4849da, #3b3bce)',
+                color: '#faf6ff',
+              }}
             >
               <span className="material-symbols-outlined text-lg">add_task</span>
-              <span>Finalize Batch</span>
+              <span>
+                {examDetail.status === 'finalized'
+                  ? 'Batch Finalized'
+                  : finalizing
+                    ? 'Finalizing...'
+                    : 'Finalize Batch'}
+              </span>
             </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-6">
+          <div className="p-6 rounded-2xl neumorphic-lift" style={{ background: '#f6f4ea', borderTop: '1px solid rgba(255,255,255,0.4)' }}>
+            <span className="text-[10px] font-black uppercase tracking-widest mb-2 block" style={{ color: '#4849da' }}>
+              Submission Access
+            </span>
+            <h2 className="text-xl font-extrabold tracking-tight mb-2" style={{ color: '#38382f' }}>
+              QR Token: {examDetail.qr_token}
+            </h2>
+            <p className="text-sm mb-4" style={{ color: '#65655b' }}>
+              Học sinh quét QR hoặc mở link submit để nộp bài vào đúng exam batch này.
+            </p>
+            <div className="rounded-xl px-4 py-3 text-sm font-medium" style={{ background: '#fcf9f1', color: '#38382f' }}>
+              {typeof window !== 'undefined'
+                ? `${window.location.origin}/submit/${examDetail.qr_token}`
+                : `/submit/${examDetail.qr_token}`}
+            </div>
+          </div>
+
+          <div className="p-6 rounded-2xl neumorphic-lift flex flex-col items-center justify-center gap-4" style={{ background: '#f6f4ea', borderTop: '1px solid rgba(255,255,255,0.4)' }}>
+            <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: '#65655b' }}>
+              QR Code
+            </span>
+            {examDetail.qr_code_url ? (
+              <img
+                src={examDetail.qr_code_url}
+                alt={`QR for ${examDetail.title}`}
+                className="w-48 h-48 rounded-2xl border border-slate-200 bg-white p-3"
+              />
+            ) : (
+              <div className="w-48 h-48 rounded-2xl border border-dashed border-slate-300 flex items-center justify-center text-sm" style={{ color: '#65655b' }}>
+                QR unavailable
+              </div>
+            )}
+            <Link
+              href={`/submit/${examDetail.qr_token}`}
+              target="_blank"
+              className="px-4 py-2 font-bold text-xs rounded-full neumorphic-lift transition-all hover:bg-primary hover:text-white active:scale-95"
+              style={{ background: '#F2EFE9', color: '#4849da' }}
+            >
+              Open Submit Page
+            </Link>
           </div>
         </div>
 
@@ -126,7 +265,12 @@ export default function BatchDetailsPage({ params }: { params: Promise<{ id: str
       {/* Student Submissions Table */}
       <section className="space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold tracking-tight" style={{ color: '#38382f' }}>Student Submissions</h2>
+          <div>
+            <h2 className="text-xl font-bold tracking-tight" style={{ color: '#38382f' }}>Student Submissions</h2>
+            <p className="text-sm mt-1" style={{ color: '#65655b' }}>
+              {examDetail.total_submissions} / {examDetail.total_expected} students submitted
+            </p>
+          </div>
           <div className="flex items-center space-x-4">
             <div className="relative">
               <input
@@ -153,6 +297,7 @@ export default function BatchDetailsPage({ params }: { params: Promise<{ id: str
                 <th className="px-6 py-2">AI Feedback</th>
                 <th className="px-6 py-2 text-center">Score</th>
                 <th className="px-6 py-2 text-right">Actions</th>
+                <th className="px-4 py-2 text-right">Delete</th>
               </tr>
             </thead>
             <tbody>
@@ -209,31 +354,41 @@ export default function BatchDetailsPage({ params }: { params: Promise<{ id: str
                         <span className="font-bold text-lg" style={{ color: '#65655b' }}>--</span>
                       )}
                     </td>
-                    <td className="px-6 py-5 rounded-r-2xl text-right">
-                      {isAttention ? (
-                        <Link
-                          href={`/review/${sub.id}`}
-                          className="px-4 py-2 font-bold text-xs rounded-full shadow-md transition-all active:scale-95"
-                          style={{ background: '#a54731', color: '#ffffff' }}
-                        >
-                          Resolve OCR
-                        </Link>
-                      ) : (
-                        <Link
-                          href={`/review/${sub.id}`}
-                          className="px-4 py-2 font-bold text-xs rounded-full neumorphic-lift transition-all hover:bg-primary hover:text-white active:scale-95"
-                          style={{ background: '#F2EFE9', color: '#4849da' }}
-                        >
-                          Review Paper
-                        </Link>
-                      )}
+                    <td className="px-6 py-5 text-right">
+                      <Link
+                        href={`/review/${sub.id}`}
+                        className="px-4 py-2 font-bold text-xs rounded-full transition-all active:scale-95"
+                        style={{
+                          background: isAttention ? '#a54731' : '#F2EFE9',
+                          color: isAttention ? '#ffffff' : '#4849da',
+                          boxShadow: isAttention ? '0 8px 18px rgba(165,71,49,0.18)' : 'none',
+                        }}
+                      >
+                        Review
+                      </Link>
+                    </td>
+                    <td className="px-4 py-5 rounded-r-2xl text-right">
+                      <button
+                        type="button"
+                        onClick={() => setConfirmDelete({ id: sub.id, studentName: sub.student.display_name })}
+                        aria-label={`Delete submission for ${sub.student.display_name}`}
+                        title="Xóa submission"
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-full transition-all active:scale-95"
+                        style={{
+                          background: 'rgba(165,71,49,0.12)',
+                          color: '#a54731',
+                          border: '1px solid rgba(165,71,49,0.16)',
+                        }}
+                      >
+                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>delete</span>
+                      </button>
                     </td>
                   </tr>
                 );
               })}
               {(!examDetail.submissions || examDetail.submissions.length === 0) && (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center" style={{ color: '#65655b' }}>
+                  <td colSpan={7} className="px-6 py-12 text-center" style={{ color: '#65655b' }}>
                     No submissions yet.
                   </td>
                 </tr>
@@ -242,6 +397,60 @@ export default function BatchDetailsPage({ params }: { params: Promise<{ id: str
           </table>
         </div>
       </section>
+
+      {confirmDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 px-4">
+          <div
+            className="w-full max-w-md rounded-3xl p-6 shadow-2xl"
+            style={{ background: '#fcf9f1', border: '1px solid rgba(187,186,174,0.25)' }}
+          >
+            <div className="mb-4 flex items-center gap-3">
+              <div
+                className="flex h-11 w-11 items-center justify-center rounded-2xl"
+                style={{ background: 'rgba(165,71,49,0.12)', color: '#a54731' }}
+              >
+                <span className="material-symbols-outlined">delete</span>
+              </div>
+              <div>
+                <h3 className="text-lg font-extrabold tracking-tight" style={{ color: '#38382f' }}>
+                  Xóa submission
+                </h3>
+                <p className="text-sm" style={{ color: '#65655b' }}>
+                  Bài nộp của <strong>{confirmDelete.studentName}</strong> sẽ bị xóa khỏi exam này.
+                </p>
+              </div>
+            </div>
+
+            <div
+              className="rounded-2xl px-4 py-3 text-sm"
+              style={{ background: 'rgba(165,71,49,0.08)', color: '#7a3423' }}
+            >
+              Hành động này sẽ xóa trang scan, kết quả OCR và điểm liên quan của submission này.
+            </div>
+
+            <div className="mt-6 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(null)}
+                disabled={deletingSubmissionId === confirmDelete.id}
+                className="px-5 py-2.5 font-bold text-sm rounded-full"
+                style={{ color: '#65655b', background: '#f0eee3' }}
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteSubmission}
+                disabled={deletingSubmissionId === confirmDelete.id}
+                className="px-5 py-2.5 font-bold text-sm rounded-full"
+                style={{ background: '#a54731', color: '#fff7f2' }}
+              >
+                {deletingSubmissionId === confirmDelete.id ? 'Đang xóa...' : 'Xác nhận xóa'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

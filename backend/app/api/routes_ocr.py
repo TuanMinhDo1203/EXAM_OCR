@@ -2,6 +2,7 @@ from fastapi import APIRouter, File, HTTPException, Request, UploadFile, status
 
 from app.schemas.ocr_response import OCRResponse
 from app.services.file_manager import FileValidationError, validate_upload, write_upload
+from app.utils.image_utils import load_image_from_bytes
 
 router = APIRouter(prefix="/api/ocr", tags=["ocr"])
 
@@ -15,16 +16,19 @@ async def predict(request: Request, file: UploadFile = File(...)) -> OCRResponse
     content = await file.read()
     try:
         validate_upload(file.filename or "upload.bin", content, settings)
-        upload_path = write_upload(file.filename or "upload.bin", content, settings)
+        image = load_image_from_bytes(content)
+        if settings.save_uploads:
+            write_upload(file.filename or "upload.bin", content, settings)
         result = request.app.state.ocr_service.predict(
-            image_path=upload_path,
-            original_filename=file.filename or upload_path.name,
+            image=image,
+            original_filename=file.filename or "upload.bin",
             request_id=request_id,
         )
         logger.info(
-            "OCR prediction completed size_bytes=%s processing_time=%s",
+            "OCR prediction completed size_bytes=%s processing_time=%s stage_timings=%s",
             len(content),
             result["processing_time"],
+            result["stage_timings"],
             extra={"request_id": request_id, "upload_name": file.filename or "-"},
         )
         return OCRResponse(**result)

@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.api import db_router, grade_router, health_router, ocr_router
+from app.api import dashboard_router, db_router, exams_router, grade_router, health_router, ocr_router, questions_router, settings_router, submit_router
 from app.core.config import get_settings
 from app.database import check_database_connection, init_database
 from app.core.logger import get_logger, setup_logging
@@ -80,7 +80,12 @@ async def request_context_middleware(request: Request, call_next):
     return response
 
 
+app.include_router(dashboard_router)
 app.include_router(health_router)
 app.include_router(ocr_router)
 app.include_router(grade_router)
 app.include_router(db_router)
+app.include_router(exams_router)
+app.include_router(questions_router)
+app.include_router(settings_router)
+app.include_router(submit_router)

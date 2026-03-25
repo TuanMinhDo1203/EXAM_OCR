@@ -10,7 +10,7 @@ backend/models
 *.env.example
 /trocr_inference_service
 onnx_export.py
-
+/import_templates
 # ── Frontend ────────────────────────────
 **/node_modules/
 **/.next/

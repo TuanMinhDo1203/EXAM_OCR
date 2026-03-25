@@ -35,6 +35,13 @@ class ClassCreate(BaseModel):
     teacher_id: UUID
 
 
+class ClassUpdate(BaseModel):
+    name: str | None = None
+    subject: str | None = None
+    join_code: str | None = None
+    teacher_id: UUID | None = None
+
+
 class ClassRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -47,10 +54,19 @@ class ClassRead(BaseModel):
     updated_at: datetime
 
 
+class ClassSummaryRead(ClassRead):
+    member_count: int = 0
+
+
 class ClassMemberCreate(BaseModel):
     class_id: UUID
     student_id: UUID
     status: str = "active"
+
+
+class ClassMemberCreateByEmail(BaseModel):
+    email: str
+    display_name: str | None = None
 
 
 class ClassMemberRead(BaseModel):
@@ -64,6 +80,17 @@ class ClassMemberRead(BaseModel):
     left_at: datetime | None
 
 
+class ClassMemberSummaryRead(BaseModel):
+    id: UUID
+    class_id: UUID
+    student_id: UUID
+    email: str
+    display_name: str | None = None
+    status: str
+    joined_at: datetime
+    left_at: datetime | None
+
+
 class QuestionBankCreate(BaseModel):
     teacher_id: UUID
     subject: str
@@ -72,6 +99,16 @@ class QuestionBankCreate(BaseModel):
     rubric_json: str | None = None
     rubric_text: str | None = None
     max_score: Decimal
+
+
+class QuestionBankUpdate(BaseModel):
+    teacher_id: UUID | None = None
+    subject: str | None = None
+    question_text: str | None = None
+    expected_answer: str | None = None
+    rubric_json: str | None = None
+    rubric_text: str | None = None
+    max_score: Decimal | None = None
 
 
 class QuestionBankRead(BaseModel):

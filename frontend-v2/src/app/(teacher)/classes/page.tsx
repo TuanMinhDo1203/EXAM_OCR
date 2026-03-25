@@ -66,11 +66,12 @@ export default function ClassesPage() {
       setMembers([]);
       return;
     }
+    const classId = selectedClassId;
 
     async function loadMembers() {
       setMembersLoading(true);
       try {
-        const result = await fetchClassMembers(selectedClassId);
+        const result = await fetchClassMembers(classId);
         setMembers(result);
       } catch (err) {
         console.error(err);
@@ -165,17 +166,18 @@ export default function ClassesPage() {
 
   async function handleAddMember() {
     if (!selectedClassId) return;
+    const classId = selectedClassId;
     setSavingMember(true);
     setError(null);
     try {
-      await addClassMember(selectedClassId, {
+      await addClassMember(classId, {
         email: memberEmail,
         display_name: memberName || undefined,
       });
       setMemberEmail('');
       setMemberName('');
-      setMembers(await fetchClassMembers(selectedClassId));
-      await refreshClasses(selectedClassId);
+      setMembers(await fetchClassMembers(classId));
+      await refreshClasses(classId);
     } catch (err) {
       console.error(err);
       setError(err instanceof Error ? err.message : 'Failed to add class member.');
@@ -186,10 +188,11 @@ export default function ClassesPage() {
 
   async function handleRemoveMember(memberId: string) {
     if (!selectedClassId) return;
+    const classId = selectedClassId;
     try {
-      await removeClassMember(selectedClassId, memberId);
-      setMembers(await fetchClassMembers(selectedClassId));
-      await refreshClasses(selectedClassId);
+      await removeClassMember(classId, memberId);
+      setMembers(await fetchClassMembers(classId));
+      await refreshClasses(classId);
     } catch (err) {
       console.error(err);
       setError(err instanceof Error ? err.message : 'Failed to remove class member.');
@@ -198,12 +201,13 @@ export default function ClassesPage() {
 
   async function handleImportMembers() {
     if (!selectedClassId || !memberImportFile) return;
+    const classId = selectedClassId;
     setImportingMembers(true);
     setError(null);
     try {
-      await importClassMembers(selectedClassId, memberImportFile);
-      setMembers(await fetchClassMembers(selectedClassId));
-      await refreshClasses(selectedClassId);
+      await importClassMembers(classId, memberImportFile);
+      setMembers(await fetchClassMembers(classId));
+      await refreshClasses(classId);
       setMemberImportFile(null);
     } catch (err) {
       console.error(err);

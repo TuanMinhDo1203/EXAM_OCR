@@ -27,3 +27,7 @@ export async function updateSubmissionPageOcrText(pageId: string, ocrText: strin
     ocr_text: ocrText,
   });
 }
+
+export async function reEvaluateAIGrade(gradeId: string): Promise<Grade> {
+  return apiClient<Grade>('POST', `/api/grades/${gradeId}/re-evaluate-ai`, {});
+}

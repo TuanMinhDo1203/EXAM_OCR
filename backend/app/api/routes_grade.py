@@ -129,6 +129,52 @@ def override_grade(grade_id: str, payload: GradeOverrideRequest, db: Session = D
         ai_score=float(grade.ai_score or 0.0),
         ai_reasoning=grade.ai_reasoning or "",
         ai_confidence=float(grade.ai_confidence or 0.0),
+        teacher_comment=grade.teacher_comment,
+        is_human_reviewed=grade.is_human_reviewed,
+        created_at=grade.created_at,
+    )
+
+
+@router.post("/{grade_id}/re-evaluate-ai", response_model=GradeItemResponse)
+def reevaluate_ai(grade_id: str, db: Session = Depends(get_db)) -> GradeItemResponse:
+    grade = db.scalar(
+        select(Grade)
+        .options(
+            selectinload(Grade.exam_question).selectinload(ExamQuestion.question),
+            selectinload(Grade.submission_answer)
+        )
+        .where(Grade.id == grade_id)
+    )
+    if grade is None:
+        raise HTTPException(status_code=404, detail="Grade not found")
+
+    system_prompt = grade.exam_question.question.rubric_text or "You are an expert programming evaluator."
+    problem_description = grade.exam_question.prompt_snapshot or ""
+    ocr_text = grade.submission_answer.aggregated_text or ""
+
+    if not ocr_text:
+        raise HTTPException(status_code=400, detail="No OCR text available to evaluate.")
+
+    from app.services.llm_grading import evaluate_ocr_with_ai
+    
+    llm_result = evaluate_ocr_with_ai(system_prompt, problem_description, ocr_text)
+    if llm_result:
+        grade.ai_score = llm_result.overall_score
+        grade.ai_reasoning = llm_result.model_dump_json()
+        db.commit()
+        db.refresh(grade)
+    else:
+        raise HTTPException(status_code=500, detail="AI Evaluation failed. Please check OpenAI configuration.")
+
+    return GradeItemResponse(
+        id=str(grade.id),
+        submission_id=str(grade.submission_id),
+        question_id=str(grade.exam_question.question_id),
+        question_text=grade.exam_question.prompt_snapshot,
+        max_score=float(grade.exam_question.max_score_snapshot or 0.0),
+        ai_score=float(grade.ai_score or 0.0),
+        ai_reasoning=grade.ai_reasoning or "",
+        ai_confidence=float(grade.ai_confidence or 0.0),
         teacher_override_score=float(grade.teacher_override_score) if grade.teacher_override_score is not None else None,
         teacher_comment=grade.teacher_comment,
         is_human_reviewed=grade.is_human_reviewed,

@@ -3,6 +3,7 @@ azure-storage-blob
 celery[redis]
 httpx==0.28.1
 numpy
+openai
 openvino
 openpyxl
 optimum-intel

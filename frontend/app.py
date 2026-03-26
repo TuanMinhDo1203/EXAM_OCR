@@ -1,3 +1,4 @@
+import json
 from io import BytesIO
 
 import requests
@@ -20,6 +21,10 @@ if "ocr_result" not in st.session_state:
     st.session_state.ocr_result = None
 if "grade_result" not in st.session_state:
     st.session_state.grade_result = None
+if "grade_detail" not in st.session_state:
+    st.session_state.grade_detail = None
+if "grade_submission_id" not in st.session_state:
+    st.session_state.grade_submission_id = ""
 if "editor_code" not in st.session_state:
     st.session_state.editor_code = ""
 if "backend_ready" not in st.session_state:
@@ -104,6 +109,32 @@ def render_code_editor(value: str, key: str, height: int) -> str:
         return rendered if rendered is not None else value
 
     return st.text_area("OCR Result", value=value, height=height, key=f"{key}_textarea")
+
+
+def fetch_submission_grade_detail(backend_url: str, submission_id: str) -> dict:
+    response = requests.get(f"{backend_url}/api/grades/submission/{submission_id}", timeout=30)
+    response.raise_for_status()
+    return response.json()
+
+
+def update_submission_page_ocr(backend_url: str, page_id: str, ocr_text: str) -> dict:
+    response = requests.patch(
+        f"{backend_url}/api/grades/submission-pages/{page_id}/ocr-text",
+        json={"ocr_text": ocr_text},
+        timeout=30,
+    )
+    response.raise_for_status()
+    return response.json()
+
+
+def re_evaluate_submission_grade(backend_url: str, grade_id: str) -> dict:
+    response = requests.post(
+        f"{backend_url}/api/grades/{grade_id}/re-evaluate-ai",
+        json={},
+        timeout=60,
+    )
+    response.raise_for_status()
+    return response.json()
 
 
 st.sidebar.header("Configuration")
@@ -195,75 +226,130 @@ with right:
     )
     st.markdown("</div>", unsafe_allow_html=True)
 
-st.markdown("### 3. Testing & Grading")
+st.markdown("### 3. Submission Review & AI Grading")
 
 grading_enabled = bool(ready_payload.get("grading_enabled"))
-input_col, output_col, run_col = st.columns([1, 1, 0.6])
+review_col, load_col = st.columns([1.4, 0.6])
 
-with input_col:
-    st.markdown("<div class='small-label'>Test Input (e.g., [1,2,3])</div>", unsafe_allow_html=True)
-    test_input = st.text_input("Test input", value="[1, 2, 3]", label_visibility="collapsed", disabled=not grading_enabled)
+with review_col:
+    submission_id_input = st.text_input(
+        "Submission ID",
+        value=st.session_state.grade_submission_id,
+        placeholder="Paste submission_id from /api/submit response",
+        disabled=not grading_enabled,
+    )
 
-with output_col:
-    st.markdown("<div class='small-label'>Expected Output</div>", unsafe_allow_html=True)
-    expected_output = st.text_input("Expected output", value="6", label_visibility="collapsed", disabled=not grading_enabled)
-
-with run_col:
+with load_col:
     st.markdown("<div style='height: 22px'></div>", unsafe_allow_html=True)
-    run_grade = st.button("🚀 Run & Grade", type="primary", use_container_width=True, disabled=(not grading_enabled or not st.session_state.editor_code.strip()))
+    load_submission = st.button(
+        "Load Submission",
+        type="primary",
+        use_container_width=True,
+        disabled=(not grading_enabled or not submission_id_input.strip()),
+    )
 
 if not grading_enabled:
     st.caption("Grading is disabled by backend config.")
+else:
+    st.caption("AI grading mới chạy theo submission review flow: load submission, sửa OCR text nếu cần, rồi re-evaluate AI.")
 
-if run_grade:
+if load_submission:
     try:
-        response = requests.post(
-            f"{backend_url}/api/grade/run",
-            json={
-                "code": st.session_state.editor_code,
-                "test_input": test_input,
-                "expected_output": expected_output,
-            },
-            timeout=30,
-        )
-        response.raise_for_status()
-        st.session_state.grade_result = response.json()
+        detail = fetch_submission_grade_detail(backend_url, submission_id_input.strip())
+        st.session_state.grade_submission_id = submission_id_input.strip()
+        st.session_state.grade_detail = detail
+        pages = detail.get("pages", [])
+        if pages:
+            st.session_state.editor_code = pages[0].get("ocr_text", "")
+        st.session_state.grade_result = None
+        st.rerun()
     except requests.HTTPError as exc:
         detail = exc.response.text if exc.response is not None else str(exc)
-        st.error(f"Grading request failed: {detail}")
+        st.error(f"Load submission failed: {detail}")
     except Exception as exc:
-        st.error(f"Grading request failed: {exc}")
+        st.error(f"Load submission failed: {exc}")
 
-st.markdown("#### Execution Result")
+grade_detail = st.session_state.grade_detail or {}
+pages = grade_detail.get("pages", [])
+grades = grade_detail.get("grades", [])
+submission = grade_detail.get("submission", {})
+current_page = pages[0] if pages else None
+current_grade = grades[0] if grades else None
 
-grade_result = st.session_state.grade_result or {}
-last_result = grade_result.get("result", "Upload an image to start")
-code_status = grade_result.get("code_status")
-test_status = grade_result.get("test_status")
-num_functions = grade_result.get("num_functions")
+if grade_detail:
+    info_col1, info_col2, info_col3 = st.columns(3)
+    with info_col1:
+        st.metric("Submission Status", submission.get("ocr_status", "-"))
+    with info_col2:
+        st.metric("AI Score", current_grade.get("ai_score", 0.0) if current_grade else 0.0)
+    with info_col3:
+        st.metric("AI Confidence", f"{(current_grade.get('ai_confidence', 0.0) if current_grade else 0.0) * 100:.1f}%")
 
-st.markdown("<div class='result-box'>", unsafe_allow_html=True)
-st.code(last_result)
-st.markdown("</div>", unsafe_allow_html=True)
+    if current_grade and current_grade.get("question_text"):
+        st.markdown("**Question Prompt**")
+        st.write(current_grade["question_text"])
 
-if code_status or test_status:
-    if num_functions:
-        st.info(f"ℹ️ Found {num_functions} function(s). Testing first one.")
+    action_col1, action_col2 = st.columns(2)
+    with action_col1:
+        save_ocr = st.button(
+            "💾 Save OCR Text",
+            use_container_width=True,
+            disabled=not bool(current_page),
+        )
+    with action_col2:
+        rerun_ai = st.button(
+            "🤖 Re-evaluate AI",
+            use_container_width=True,
+            disabled=not bool(current_page and current_grade),
+        )
 
-    col1, col2 = st.columns(2)
-    with col1:
-        if code_status == "good":
-            st.markdown("<div class='status-good'>✅ GOOD CODE</div>", unsafe_allow_html=True)
-        elif code_status:
-            st.markdown("<div class='status-bad'>❌ BAD CODE</div>", unsafe_allow_html=True)
+    if save_ocr and current_page:
+        try:
+            update_submission_page_ocr(backend_url, current_page["id"], st.session_state.editor_code)
+            refreshed = fetch_submission_grade_detail(backend_url, st.session_state.grade_submission_id)
+            st.session_state.grade_detail = refreshed
+            st.success("OCR text saved to submission.")
+            st.rerun()
+        except requests.HTTPError as exc:
+            detail = exc.response.text if exc.response is not None else str(exc)
+            st.error(f"Save OCR failed: {detail}")
+        except Exception as exc:
+            st.error(f"Save OCR failed: {exc}")
 
-    with col2:
-        if test_status == "passed":
-            st.markdown("<div class='status-good'>✅ TEST PASSED</div>", unsafe_allow_html=True)
-        elif test_status == "failed":
-            st.markdown("<div class='status-bad'>❌ TEST FAILED</div>", unsafe_allow_html=True)
-        elif test_status:
-            st.markdown("<div class='status-neutral'>⚪ TEST NOT RUN</div>", unsafe_allow_html=True)
+    if rerun_ai and current_page and current_grade:
+        try:
+            update_submission_page_ocr(backend_url, current_page["id"], st.session_state.editor_code)
+            updated_grade = re_evaluate_submission_grade(backend_url, current_grade["id"])
+            refreshed = fetch_submission_grade_detail(backend_url, st.session_state.grade_submission_id)
+            st.session_state.grade_detail = refreshed
+            st.session_state.grade_result = updated_grade
+            st.success("AI re-evaluation completed.")
+            st.rerun()
+        except requests.HTTPError as exc:
+            detail = exc.response.text if exc.response is not None else str(exc)
+            st.error(f"AI re-evaluation failed: {detail}")
+        except Exception as exc:
+            st.error(f"AI re-evaluation failed: {exc}")
+else:
+    st.info("OCR upload ở trên chỉ chạy inference trực tiếp. Muốn dùng AI grading mới, hãy load một submission đã có trong hệ thống.")
+
+st.markdown("#### AI Grading Result")
+
+if current_grade:
+    reasoning_raw = current_grade.get("ai_reasoning", "")
+    st.markdown("<div class='result-box'>", unsafe_allow_html=True)
+    if reasoning_raw:
+        try:
+            st.json(json.loads(reasoning_raw))
+        except Exception:
+            st.code(reasoning_raw)
+    else:
+        st.write("No AI reasoning available yet.")
+    st.markdown("</div>", unsafe_allow_html=True)
+else:
+    st.markdown("<div class='result-box'>", unsafe_allow_html=True)
+    st.write("Load a submission to inspect or re-evaluate AI grading.")
+    st.markdown("</div>", unsafe_allow_html=True)
 
 if result:
     st.markdown("### OCR Metadata")

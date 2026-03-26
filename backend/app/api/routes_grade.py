@@ -148,7 +148,7 @@ def reevaluate_ai(grade_id: str, db: Session = Depends(get_db)) -> GradeItemResp
     if grade is None:
         raise HTTPException(status_code=404, detail="Grade not found")
 
-    system_prompt = grade.exam_question.question.rubric_text or "You are an expert programming evaluator."
+    system_prompt = grade.exam_question.rubric_snapshot or "You are an expert programming evaluator."
     problem_description = grade.exam_question.prompt_snapshot or ""
     ocr_text = grade.submission_answer.aggregated_text or ""
 

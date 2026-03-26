@@ -67,6 +67,7 @@ class Settings(BaseSettings):
     internal_grading_only: bool = True
     grading_api_key: str | None = None
     grading_timeout_seconds: int = 5
+    openai_api_key: str | None = None
 
     db_server: str = "examocrserver.database.windows.net"
     db_port: int = 1433

@@ -340,6 +340,22 @@ Giáo viên chỉnh điểm / ghi chú cho từng câu hỏi.
 
 ---
 
+### `POST /api/grades/{grade_id}/re-evaluate-ai`
+Kích hoạt AI (OpenAI GPT-4o) chấm lại bài dựa trên kết quả OCR hiện tại và Rubric Prompt của kỳ thi.
+
+**Response `200`:**
+```json
+{
+  "id": "grd_001",
+  "submission_id": "sub_001",
+  "ai_score": 88,
+  "ai_reasoning": "{\"scores\": {\"task_response\": 9, ...}, \"overall_score\": 88, \"analysis\": {...}}",
+  "ai_confidence": 0.95
+}
+```
+
+---
+
 ## 6. Questions — Ngân Hàng Câu Hỏi
 
 ### `GET /api/questions`

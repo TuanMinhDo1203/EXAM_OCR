@@ -158,7 +158,7 @@ export default function StudentLandingPage({ params }: { params: Promise<{ token
                  {isValidating ? 'Đang kiểm tra email...' : 'Continue to Upload'}
              </button>
              <p className="text-xs text-center text-slate-400 font-medium px-4">
-                 By continuing, you agree to Alabaster Academy's academic integrity policy.
+                 By continuing, you agree to FPTU Academy's academic integrity policy.
              </p>
           </div>
        </div>

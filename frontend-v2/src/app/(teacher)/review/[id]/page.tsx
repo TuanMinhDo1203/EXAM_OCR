@@ -5,7 +5,7 @@ import React, { useEffect, useRef, useState, use, useMemo } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { API_BASE_URL } from '@/lib/api/client';
-import { fetchSubmissionGrade, overrideGrade, updateSubmissionPageOcrText } from '@/lib/api/grades';
+import { fetchSubmissionGrade, overrideGrade, updateSubmissionPageOcrText, reEvaluateAIGrade } from '@/lib/api/grades';
 import { SubmissionGradeDetail } from '@/types/grade_detail';
 import 'ace-builds/src-noconflict/ace';
 import 'ace-builds/src-noconflict/mode-python';
@@ -30,6 +30,7 @@ export default function ResolutionDeskPage({ params }: { params: Promise<{ id: s
   const [saving, setSaving] = useState(false);
   const [savingCode, setSavingCode] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [evaluatingAI, setEvaluatingAI] = useState(false);
   const [ocrDirty, setOcrDirty] = useState(false);
   const [gradeDirty, setGradeDirty] = useState(false);
   const [imageZoom, setImageZoom] = useState(1);
@@ -292,6 +293,30 @@ export default function ResolutionDeskPage({ params }: { params: Promise<{ id: s
     }
   }
 
+  async function handleReEvaluateAI() {
+    if (!currentGrade) return;
+    setEvaluatingAI(true);
+    try {
+      const updated = await reEvaluateAIGrade(currentGrade.id);
+      setData((current) => {
+        if (!current) return current;
+        const nextGrades = current.grades.map((item) => (item.id === updated.id ? updated : item));
+        return {
+          ...current,
+          grades: nextGrades,
+        };
+      });
+      if (!gradeDirty) {
+        setOverrideScore(updated.teacher_override_score ?? updated.ai_score ?? 0);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Lỗi chấm điểm AI. Vui lòng thử lại hoặc xem cấu hình OpenAI.');
+    } finally {
+      setEvaluatingAI(false);
+    }
+  }
+
   return (
     /* Full-bleed layout */
     <div className="flex flex-col" style={{ height: 'calc(100vh - 56px)', overflow: 'hidden' }}>
@@ -543,7 +568,7 @@ export default function ResolutionDeskPage({ params }: { params: Promise<{ id: s
                     theme="github_dark"
                     name={`submission-editor-${sub.id}`}
                     value={editableCode}
-                    onChange={(value) => {
+                    onChange={(value: string) => {
                       setEditableCode(value);
                       setOcrDirty(true);
                     }}
@@ -581,10 +606,22 @@ export default function ResolutionDeskPage({ params }: { params: Promise<{ id: s
 
             {/* AI Grading Evaluation */}
             <div className="space-y-4">
-              <h3 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2" style={{ color: '#65655b' }}>
-                <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#4849da' }}>award_star</span>
-                AI Chấm Điểm
-              </h3>
+              <div className="flex justify-between items-center">
+                <h3 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2" style={{ color: '#65655b' }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#4849da' }}>award_star</span>
+                  AI Chấm Điểm
+                </h3>
+                <button
+                  type="button"
+                  onClick={handleReEvaluateAI}
+                  disabled={evaluatingAI || savingCode || isProcessing}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black uppercase transition-all hover:bg-white disabled:opacity-50 neumorphic-lift"
+                  style={{ color: '#4849da', background: '#F2EFE9' }}
+                >
+                  <span className={`material-symbols-outlined text-[14px] ${evaluatingAI ? 'animate-spin' : ''}`}>sync</span>
+                  {evaluatingAI ? 'Đang chấm...' : 'Re-evaluate AI'}
+                </button>
+              </div>
               {currentGrade?.question_text && (
                 <div className="rounded-xl border border-slate-200 bg-white/70 px-4 py-3 text-sm font-medium" style={{ color: '#38382f' }}>
                   {currentGrade.question_text}
@@ -603,11 +640,50 @@ export default function ResolutionDeskPage({ params }: { params: Promise<{ id: s
                 </div>
                 <div>
                   <p className="text-[10px] font-bold uppercase mb-1" style={{ color: 'rgba(101,101,91,0.7)' }}>
-                    Lý do chấm
+                    Chi tiết phân tích (LLM)
                   </p>
-                  <p className="text-sm leading-relaxed" style={{ color: 'rgba(56,56,47,0.8)' }}>
-                    {currentGrade?.ai_reasoning || 'Đang phân tích...'}
-                  </p>
+                  {(() => {
+                    if (!currentGrade?.ai_reasoning) return <p className="text-sm italic text-gray-400">Đang chờ kết quả AI...</p>;
+                    try {
+                      const parsed = JSON.parse(currentGrade.ai_reasoning);
+                      const scores = parsed?.scores || {};
+                      const analysis = parsed?.analysis || {};
+                      return (
+                        <div className="space-y-4 mt-2">
+                           <div className="grid grid-cols-2 gap-3">
+                             {[
+                               { label: 'Task Response', val: scores.task_response },
+                               { label: 'Structure', val: scores.coherence_structure },
+                               { label: 'Lexical', val: scores.lexical_resource },
+                               { label: 'Grammar', val: scores.grammatical_accuracy },
+                               { label: 'Robustness', val: scores.robustness },
+                             ].map((s, i) => (
+                               <div key={i} className="flex flex-col gap-1">
+                                 <div className="flex justify-between text-[9px] font-bold uppercase text-gray-500">
+                                   <span>{s.label}</span>
+                                   <span style={{ color: '#4849da' }}>{typeof s.val === 'number' ? s.val : '-'} / 9</span>
+                                 </div>
+                                 <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
+                                   <div className="h-full transition-all duration-500" style={{ background: '#4849da', width: `${(typeof s.val === 'number' ? s.val : 0) / 9 * 100}%` }} />
+                                 </div>
+                               </div>
+                             ))}
+                           </div>
+                           
+                           <div className="bg-white/50 p-3 rounded-lg border border-black/5 text-sm" style={{ color: 'rgba(56,56,47,0.9)' }}>
+                             <p className="font-bold text-[10px] uppercase mb-2" style={{ color: '#65655b' }}>Điểm mạnh / Điểm yếu</p>
+                             <ul className="list-disc pl-4 space-y-1 mt-2 text-xs">
+                                {analysis.strengths?.map((x: string, i: number) => <li key={`str-${i}`} className="text-emerald-700">{x}</li>)}
+                                {analysis.weaknesses?.map((x: string, i: number) => <li key={`weak-${i}`} className="text-rose-700">{x}</li>)}
+                                {analysis.ocr_issues_detected?.map((x: string, i: number) => <li key={`ocr-${i}`} className="text-amber-700">OCR Issue: {x}</li>)}
+                             </ul>
+                           </div>
+                        </div>
+                      );
+                    } catch (e) {
+                      return <p className="text-sm whitespace-pre-wrap leading-relaxed" style={{ color: 'rgba(56,56,47,0.8)' }}>{currentGrade.ai_reasoning}</p>;
+                    }
+                  })()}
                 </div>
 
                 {/* Score slider */}

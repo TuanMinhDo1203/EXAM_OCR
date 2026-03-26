@@ -10,7 +10,7 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: 'EXAM_OCR V2.0 | Alabaster Academy',
+  title: 'EXAM_OCR V2.0 | FPTU Academy',
   description: 'AI-Powered Exam Grading System for Educators',
 };
 

@@ -238,15 +238,15 @@ export default function ExamBuilderPage() {
           {/* Section 3: AI Grading Rules */}
           <div className="space-y-4">
             <h2 className="text-lg font-semibold border-b border-gray-100 pb-2 flex justify-between items-center">
-              <span>3. AI Grading Rubric</span>
+              <span>3. AI Grading System Prompt</span>
               <button type="button" className="text-sm bg-indigo-50 text-indigo-700 pr-3 pl-2 py-1 rounded-md flex items-center hover:bg-indigo-100 transition-colors">
                 <span className="mr-1">✨</span> Assist Me
               </button>
             </h2>
-            <p className="text-sm text-gray-500">Define the rules for the AI Agent to grade this specific batch.</p>
+            <p className="text-sm text-gray-500">Define the system instruction prompt for the OpenAI Agent to grade this specific batch. The AI will output JSON including Task Response, Coherence, Lexical Resource, Grammatical Accuracy, and Robustness.</p>
             <textarea 
               rows={8}
-              placeholder="Example: Deduct 1 point for missing units. Award full points if the final answer is correct regardless of method..."
+              placeholder="You are an expert programming evaluator acting as an objective grading agent..."
               className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               value={formData.rubric_text}
               onChange={(e) => setFormData({...formData, rubric_text: e.target.value})}

@@ -22,6 +22,16 @@ try:
 except Exception:  # pragma: no cover
     OVModelForVision2Seq = None
 
+try:
+    from optimum.onnxruntime import ORTModelForVision2Seq
+except Exception:  # pragma: no cover
+    ORTModelForVision2Seq = None
+
+try:
+    import onnxruntime as ort
+except Exception:  # pragma: no cover
+    ort = None
+
 from app.core.config import get_settings
 from app.core.model_registry import ModelRegistry
 from app.services.ocr_pipeline import OCRPipelineService
@@ -121,7 +131,55 @@ def load_openvino_recognizer(ov_dir: Path):
     return processor, model
 
 
+def load_onnx_recognizer(onnx_dir: Path, requested_device: str):
+    if ORTModelForVision2Seq is None:
+        raise RuntimeError("optimum[onnxruntime] is not installed in this environment.")
+    if ort is None:
+        raise RuntimeError("onnxruntime is not installed in this environment.")
+
+    provider = "CPUExecutionProvider"
+    providers = ["CPUExecutionProvider"]
+    if requested_device == "cuda":
+        available = ort.get_available_providers()
+        if "CUDAExecutionProvider" not in available:
+            raise RuntimeError(
+                "CUDAExecutionProvider is unavailable in this environment. "
+                f"Available providers: {available}"
+            )
+        provider = "CUDAExecutionProvider"
+        providers = ["CUDAExecutionProvider", "CPUExecutionProvider"]
+
+    processor = TrOCRProcessor.from_pretrained(onnx_dir, use_fast=True)
+    model = ORTModelForVision2Seq.from_pretrained(
+        onnx_dir,
+        provider=provider,
+        providers=providers,
+        use_cache=False,
+        use_merged=False,
+        encoder_file_name="encoder_model.onnx",
+        decoder_file_name="decoder_model.onnx",
+        use_io_binding=False,
+    )
+
+    return processor, model
+
+
 def ocr_crops_openvino(processor, model, image: Image.Image, boxes: list[list[float]], settings) -> list[str]:
+    texts: list[str] = []
+    for box in boxes:
+        x1, y1, x2, y2 = [int(max(0, value)) for value in box]
+        crop = pad_crop(image.crop((x1, y1, x2, y2)), settings=settings)
+        inputs = processor(images=crop, return_tensors="pt")
+        generated_ids = model.generate(
+            **inputs,
+            num_beams=settings.trocr_num_beams,
+            max_new_tokens=settings.trocr_max_tokens,
+        )
+        texts.append(processor.batch_decode(generated_ids, skip_special_tokens=True)[0])
+    return texts
+
+
+def ocr_crops_onnx(processor, model, image: Image.Image, boxes: list[list[float]], settings) -> list[str]:
     texts: list[str] = []
     for box in boxes:
         x1, y1, x2, y2 = [int(max(0, value)) for value in box]
@@ -194,12 +252,70 @@ def benchmark_openvino(image_paths: list[Path], registry: ModelRegistry, setting
     }
 
 
+def run_onnx_once(image_path: Path, registry: ModelRegistry, settings, onnx_processor, onnx_model) -> dict:
+    image = Image.open(image_path).convert("RGB")
+    try:
+        timings: dict[str, float] = {}
+        started = time.perf_counter()
+        models = registry.get_models()
+
+        stage_started = time.perf_counter()
+        image = downscale_image(image, settings.max_image_dim)
+        timings["preprocess"] = round(time.perf_counter() - stage_started, 4)
+
+        stage_started = time.perf_counter()
+        boxes = detect_boxes(models.yolo, image, settings)
+        timings["detection"] = round(time.perf_counter() - stage_started, 4)
+
+        stage_started = time.perf_counter()
+        classifications = classify_crops(
+            models.resnet,
+            models.resnet_transform,
+            models.device,
+            image,
+            boxes,
+        )
+        timings["classification"] = round(time.perf_counter() - stage_started, 4)
+
+        stage_started = time.perf_counter()
+        boxes_for_ocr = [box for box, cls in zip(boxes, classifications) if cls["class"] != "crossed"]
+        texts = ocr_crops_onnx(onnx_processor, onnx_model, image, boxes_for_ocr, settings)
+        timings["recognition"] = round(time.perf_counter() - stage_started, 4)
+
+        stage_started = time.perf_counter()
+        indent_levels = compute_indent_levels(boxes_for_ocr, settings)
+        recognized_text = format_text(texts, indent_levels, settings)
+        build_box_records(boxes, classifications, texts, indent_levels)
+        timings["postprocess"] = round(time.perf_counter() - stage_started, 4)
+
+        return {
+            "image": image_path.name,
+            "wall_time": round(time.perf_counter() - started, 4),
+            "pipeline_time": round(time.perf_counter() - started, 4),
+            "stage_timings": timings,
+            "recognized_text": recognized_text,
+        }
+    finally:
+        image.close()
+
+
+def benchmark_onnx(image_paths: list[Path], registry: ModelRegistry, settings, onnx_dir: Path) -> dict:
+    onnx_processor, onnx_model = load_onnx_recognizer(onnx_dir, settings.device)
+    runs = [run_onnx_once(image_path, registry, settings, onnx_processor, onnx_model) for image_path in image_paths]
+    return {
+        "count": len(runs),
+        "avg_wall_time": round(statistics.mean(item["wall_time"] for item in runs), 4),
+        "avg_pipeline_time": round(statistics.mean(item["pipeline_time"] for item in runs), 4),
+        "runs": runs,
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--images", nargs="+", required=True, help="One or more image paths")
     parser.add_argument(
         "--mode",
-        choices=["optimized", "openvino", "both", "all"],
+        choices=["optimized", "openvino", "onnx", "both", "all"],
         default="optimized",
         help="Which pipeline version to benchmark",
     )
@@ -241,6 +357,12 @@ def main() -> None:
         type=str,
         default=str(PROJECT_ROOT / "backend" / "models" / "trocr_openvino"),
         help="Path to exported OpenVINO TrOCR directory.",
+    )
+    parser.add_argument(
+        "--onnx-dir",
+        type=str,
+        default=str(PROJECT_ROOT / "backend" / "models" / "trocr_onnx"),
+        help="Path to exported ONNX TrOCR directory.",
     )
     args = parser.parse_args()
 
@@ -292,6 +414,22 @@ def main() -> None:
             sample = build_sample_set(image_paths, count)
             report = benchmark_openvino(sample, registry, settings, ov_dir)
             print(f"\n=== Benchmark [openvino]: {count} image(s) ===")
+            print(f"Average wall time: {report['avg_wall_time']}s")
+            print(f"Average pipeline time: {report['avg_pipeline_time']}s")
+            for run in report["runs"]:
+                print(
+                    f"- {run['image']}: wall={run['wall_time']}s "
+                    f"pipeline={run['pipeline_time']}s timings={run['stage_timings']}"
+                )
+
+    if args.mode in {"onnx", "all"}:
+        onnx_dir = Path(args.onnx_dir)
+        if not onnx_dir.exists():
+            raise FileNotFoundError(f"ONNX model directory not found: {onnx_dir}")
+        for count in args.counts:
+            sample = build_sample_set(image_paths, count)
+            report = benchmark_onnx(sample, registry, settings, onnx_dir)
+            print(f"\n=== Benchmark [onnx]: {count} image(s) ===")
             print(f"Average wall time: {report['avg_wall_time']}s")
             print(f"Average pipeline time: {report['avg_pipeline_time']}s")
             for run in report["runs"]:

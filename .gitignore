@@ -11,6 +11,7 @@ backend/models
 /trocr_inference_service
 onnx_export.py
 /import_templates
+/evaluation_results_openvino
 # ── Frontend ────────────────────────────
 **/node_modules/
 **/.next/

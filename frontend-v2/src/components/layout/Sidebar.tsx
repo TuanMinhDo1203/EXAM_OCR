@@ -27,7 +27,7 @@ export default function Sidebar() {
           <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>auto_stories</span>
         </div>
         <span className="text-lg font-black tracking-tighter" style={{ color: '#38382f' }}>
-          Alabaster Academy
+          FPTU Academy
         </span>
       </div>
 
@@ -78,7 +78,7 @@ export default function Sidebar() {
               PA
             </div>
             <div>
-              <p className="text-xs font-bold" style={{ color: '#38382f' }}>Prof. Alabaster</p>
+              <p className="text-xs font-bold" style={{ color: '#38382f' }}>Prof. FPTU</p>
               <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: '#65655b' }}>
                 Senior Educator
               </p>

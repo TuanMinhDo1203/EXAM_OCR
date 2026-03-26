@@ -8,7 +8,7 @@ test.describe('Student Submission Flow', () => {
     await page.goto('/submit/MTH402-2026');
     
     await expect(page.getByText('Midterm 1: Calculus')).toBeVisible();
-    await expect(page.getByText('Prof. Alabaster')).toBeVisible();
+    await expect(page.getByText('Prof. FPTU')).toBeVisible();
     
     // 2. Start capture
     await page.getByRole('link', { name: 'Authenticate & Continue' }).click();

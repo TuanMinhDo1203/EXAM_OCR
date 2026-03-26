@@ -28,3 +28,4 @@ onnx_export.py
 **/playwright-report/
 **/test-results/
 **/coverage/
+backend/venv/

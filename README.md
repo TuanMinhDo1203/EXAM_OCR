@@ -1,528 +1,278 @@
-# Exam OCR Platform
+# EXAM_OCR
 
-Đây là phiên bản refactor theo hướng triển khai thực tế hơn của một ứng dụng OCR Streamlit dạng monolithic dùng để đọc bài thi viết tay hoặc code viết tay.
+Handwritten code OCR for academic exam sheets, built as a deployable system rather than a notebook-only prototype.
 
-Mục tiêu chính của dự án:
+This project detects handwritten code lines, filters unusable regions, recognizes code text, reconstructs indentation-sensitive output, and supports asynchronous submission processing with review and grading workflows.
 
-- nhận ảnh bài thi hoặc ảnh code viết tay
-- phát hiện các vùng text trong ảnh
-- phân loại vùng text có dùng được hay bị gạch bỏ
-- chạy OCR trên các vùng hợp lệ
-- dựng lại text/code có cấu trúc
-- hỗ trợ chấm code ở mức demo nội bộ
+## Why This Project
 
-Phiên bản này giữ logic OCR/ML gần với bản cũ nhất có thể, nhưng tách kiến trúc thành frontend và backend rõ ràng hơn.
+Recognizing handwritten code is harder than normal OCR:
 
-## 1. Tổng quan dự án
+- programming syntax is brittle
+- characters such as `1`, `l`, `i`, `(`, `{`, and `[` are easy to confuse
+- Python indentation carries semantics
+- exam sheets are noisy, inconsistent, and written under time pressure
 
-Phiên bản cũ của dự án gom tất cả vào một file Streamlit:
+`EXAM_OCR` tackles this with a hybrid pipeline:
 
-- giao diện
-- load model
-- OCR inference
-- vẽ box visualize
-- grading và thực thi code
+- `YOLO` for line detection
+- `ResNet18` for line-status classification (`clean`, `ambiguous`, `crossed`)
+- `TrOCR` for handwritten text recognition
+- indentation-aware post-processing for code reconstruction
 
-Phiên bản mới tách ra thành:
+It also includes a real application stack:
 
-- `frontend/`: Streamlit client mỏng
-- `backend/`: FastAPI API và các service OCR
-- `deployment/`: Docker và docker-compose
-- `scripts/`: script warmup và smoke test
+- `FastAPI` backend
+- `Celery + Redis` for background OCR jobs
+- `Azure SQL` for exam/submission metadata
+- `Azure Blob Storage` for images and OCR artifacts
+- `frontend-v2` for submission and teacher review workflows
 
-Mục tiêu của việc refactor:
+![Hero Demo](assets/hero.png)
 
-- dễ deploy hơn
-- dễ bảo trì hơn
-- cấu hình bằng biến môi trường
-- tách grading khỏi luồng OCR công khai
-- giảm phụ thuộc vào path local hard-code
+## Project Highlights
 
-## 2. Tóm tắt pipeline OCR
+- End-to-end OCR pipeline for handwritten code exam sheets
+- Hardware-aware optimization for both CPU and GPU deployment
+- OpenVINO integration for the best CPU path
+- CUDA FP16 path for the strongest stable GPU acceleration
+- Asynchronous architecture suitable for real submissions
+- Teacher-in-the-loop review and AI re-evaluation workflow
 
-Luồng OCR hiện tại như sau:
+## How It Works
 
-1. Người dùng upload ảnh từ frontend.
-2. Frontend gửi ảnh sang backend qua HTTP.
-3. Backend kiểm tra file upload.
-4. YOLO phát hiện các box chứa text/dòng.
-5. ResNet18 phân loại từng crop thành:
-   - `clean`
-   - `ambiguous`
-   - `crossed`
-6. Các box `crossed` sẽ bị loại khỏi bước OCR.
-7. TrOCR đọc text từ các box còn lại.
-8. DBSCAN gom cụm theo tọa độ trái để suy ra mức indent.
-9. Backend ghép lại text/code hoàn chỉnh có thụt đầu dòng.
-10. Backend trả JSON kết quả và ảnh visualization nếu có.
+The OCR flow is:
 
-Ý tưởng chính:
+1. Upload an exam-sheet image.
+2. Detect handwritten code lines with YOLO.
+3. Classify each crop with ResNet18.
+4. Remove `crossed` lines before OCR.
+5. Recognize valid lines with TrOCR.
+6. Recover indentation structure from line geometry.
+7. Return reconstructed code and optional visualization.
 
-- YOLO tìm vị trí vùng chữ
-- ResNet quyết định vùng nào nên giữ
-- TrOCR đọc nội dung chữ
-- DBSCAN hỗ trợ dựng lại cấu trúc code
+This separation is important: line detection, filtering, recognition, and reconstruction are different problems and benefit from different models.
 
-## 3. Kiến trúc hệ thống
+![Overall OCR Pipeline](assets/pipeline.png)
 
-### Frontend
+## Performance Snapshot
 
-Frontend nằm ở [frontend/app.py](/home/bendo/Desktop/Ben/DAT/EXAM_OCR/frontend/app.py).
+These are the current headline results used in the project:
 
-Frontend chỉ làm:
+### Full pipeline CPU
 
-- upload ảnh
-- preview ảnh
-- gọi API backend
-- hiển thị text OCR
-- hiển thị visualization backend trả về
-- gọi grading endpoint nếu backend cho phép
+| Mode | Avg. Pipeline Time | Notes |
+|---|---:|---|
+| Baseline PyTorch | `~91.0s` | original reference pipeline |
+| Optimized PyTorch | `~81.7s` | reduced overhead on the hot path |
+| ONNX CPU | `~87.4s` | not better than optimized PyTorch |
+| OpenVINO CPU | `~23.4s` | best CPU path |
 
-Frontend không load model và không chạy OCR trực tiếp.
+### TrOCR quality
 
-### Backend
+| Runtime | Device | Mean CER | Median CER | Exact Match |
+|---|---|---:|---:|---:|
+| PyTorch | CPU | `0.240490` | `0.166667` | `27.01%` |
+| OpenVINO | CPU | `0.240490` | `0.166667` | `27.01%` |
+| PyTorch | CUDA fp16 | `0.2410` | `0.1667` | `27.01%` |
 
-Backend nằm ở [backend/app/main.py](/home/bendo/Desktop/Ben/DAT/EXAM_OCR/backend/app/main.py).
+### ResNet classifier
 
-Backend chịu trách nhiệm:
+| Runtime | Accuracy | Avg. Time / Image | Throughput |
+|---|---:|---:|---:|
+| PyTorch | `79.02%` | `3.570 ms` | `280.09 img/s` |
+| OpenVINO | `79.02%` | `3.124 ms` | `320.14 img/s` |
 
-- load model khi startup
-- cung cấp API health
-- cung cấp API readiness
-- cung cấp API OCR prediction
-- cung cấp API grading tùy chọn
-- validate file upload
-- điều phối pipeline OCR
-- lưu file output và visualization
-- logging tập trung
+### Best runtime per hardware target
 
-### Ranh giới bảo mật
+- `CPU`: OpenVINO
+- `GPU`: PyTorch CUDA FP16
 
-Phần grading được tách khỏi luồng OCR chính.
+For more details, see [BENCHMARK_RESULTS.md](BENCHMARK_RESULTS.md) and [documents/PRESENTATION_REPORT_GUIDE.md](documents/PRESENTATION_REPORT_GUIDE.md).
 
-Lưu ý quan trọng:
+## Architecture
 
-- grading đang tắt mặc định
-- grading chỉ nên coi là internal/demo-only
-- grading chưa phải sandbox thật sự
-- không nên public route grading nếu chưa có cơ chế cô lập mạnh hơn
+This repository contains both model experimentation artifacts and a deployable application stack.
 
-## 4. Cấu trúc thư mục hiện tại
+### Core components
+
+| Layer | Stack | Responsibility |
+|---|---|---|
+| Frontend | `frontend-v2` | student submission, teacher review, grading views |
+| Legacy demo UI | `frontend` | older Streamlit-based OCR/grading demo |
+| API | FastAPI | OCR orchestration, submission APIs, grading APIs |
+| Background jobs | Celery + Redis | asynchronous OCR processing |
+| OCR models | YOLO + ResNet18 + TrOCR | detection, filtering, recognition |
+| Storage | Azure Blob | uploaded images and visualization outputs |
+| Database | Azure SQL | exams, submissions, pages, answers, grades |
+| Optional remote inference | GPU service | remote TrOCR path for GPU-backed deployments |
+
+### Why Celery + Redis?
+
+OCR is compute-heavy and slow relative to a normal web request. Instead of making the frontend wait for a full OCR pass, the backend stores the submission, enqueues a job, and lets workers process it in the background. This improves responsiveness, isolates OCR failures from request-serving, and scales better when many students submit at once.
+
+If you have a proper architecture diagram later, this is the best place to insert it.
+
+## Current Product Surface
+
+The project currently exposes two UI layers:
+
+- [`frontend-v2`](frontend-v2): the main product UI for exam submission and teacher review
+- [`frontend`](frontend): a legacy Streamlit demo client
+
+The backend lives in [`backend/app`](backend/app) and provides:
+
+- OCR prediction endpoints
+- readiness and health endpoints
+- submission and review endpoints
+- grading and AI re-evaluation flows
+
+### UI Preview
+
+#### Exam Batch View
+
+![Exam Batches](assets/exam_batches.png)
+
+#### Dashboard / Review Surface
+
+![Dashboard](assets/dashboard.png)
+
+## Repository Structure
 
 ```text
 EXAM_OCR/
-├── README.md
-├── .env
-├── .env.example
-├── .gitignore
 ├── backend/
 │   ├── app/
-│   │   ├── api/
-│   │   │   ├── routes_health.py
-│   │   │   ├── routes_ocr.py
-│   │   │   └── routes_grade.py
-│   │   ├── core/
-│   │   │   ├── config.py
-│   │   │   ├── logger.py
-│   │   │   └── model_registry.py
-│   │   ├── schemas/
-│   │   │   ├── grade_response.py
-│   │   │   └── ocr_response.py
-│   │   ├── services/
-│   │   │   ├── classification.py
-│   │   │   ├── detection.py
-│   │   │   ├── file_manager.py
-│   │   │   ├── formatting.py
-│   │   │   ├── grading.py
-│   │   │   ├── ocr_pipeline.py
-│   │   │   └── recognition.py
-│   │   ├── utils/
-│   │   │   ├── image_utils.py
-│   │   │   └── security.py
-│   │   └── main.py
 │   ├── models/
-│   │   ├── YOLO/
-│   │   ├── Resnet/
-│   │   └── trocr_handwritten_decoder_only_best_S1/
 │   ├── runtime/
-│   │   ├── uploads/
-│   │   └── outputs/
-│   └── requirements.txt
+│   ├── scripts/
+│   └── tests/
 ├── frontend/
-│   ├── app.py
-│   └── requirements.txt
+├── frontend-v2/
 ├── deployment/
-│   ├── docker/
-│   │   ├── Dockerfile.backend
-│   │   ├── Dockerfile.frontend
-│   │   └── nginx.conf
-│   └── docker-compose.yml
-└── scripts/
-    ├── smoke_test.py
-    └── warmup.py
+├── documents/
+├── evaluation_results_openvino/
+├── import_templates/
+├── scripts/
+├── BENCHMARK_RESULTS.md
+└── README.md
 ```
 
-## 5. Vai trò các file quan trọng
+## Key Files
 
-### Backend core
+### OCR and model orchestration
 
-- [backend/app/core/config.py](/home/bendo/Desktop/Ben/DAT/EXAM_OCR/backend/app/core/config.py)  
-  Đọc biến môi trường từ `.env` và cung cấp giá trị mặc định.
+- [`backend/app/main.py`](backend/app/main.py): FastAPI application entrypoint
+- [`backend/app/core/model_registry.py`](backend/app/core/model_registry.py): model loading and warmup
+- [`backend/app/services/ocr_pipeline.py`](backend/app/services/ocr_pipeline.py): end-to-end OCR orchestration
+- [`backend/app/services/detection.py`](backend/app/services/detection.py): YOLO detection
+- [`backend/app/services/classification.py`](backend/app/services/classification.py): ResNet classification
+- [`backend/app/services/recognition.py`](backend/app/services/recognition.py): TrOCR recognition and indentation logic
+- [`backend/app/services/formatting.py`](backend/app/services/formatting.py): code reconstruction and visualization
 
-- [backend/app/core/model_registry.py](/home/bendo/Desktop/Ben/DAT/EXAM_OCR/backend/app/core/model_registry.py)  
-  Load YOLO, TrOCR và ResNet một lần khi backend khởi động.
+### Background processing and grading
 
-- [backend/app/core/logger.py](/home/bendo/Desktop/Ben/DAT/EXAM_OCR/backend/app/core/logger.py)  
-  Cấu hình logging tập trung.
+- [`backend/app/workers/submission_tasks.py`](backend/app/workers/submission_tasks.py): Celery task entrypoint
+- [`backend/app/services/submission_processing.py`](backend/app/services/submission_processing.py): OCR job flow for submissions
+- [`backend/app/api/routes_grade.py`](backend/app/api/routes_grade.py): grading and re-evaluation APIs
+- [`backend/app/services/llm_grading.py`](backend/app/services/llm_grading.py): OpenAI-based grading logic
 
-### Backend OCR services
+### Deployment and configuration
 
-- [backend/app/services/detection.py](/home/bendo/Desktop/Ben/DAT/EXAM_OCR/backend/app/services/detection.py)  
-  Logic detect bằng YOLO.
+- [`deployment/docker-compose.yml`](deployment/docker-compose.yml): multi-service deployment
+- [`deployment/.env`](deployment/.env): environment configuration for deployment
+- [`backend/app/core/config.py`](backend/app/core/config.py): runtime settings loader
 
-- [backend/app/services/classification.py](/home/bendo/Desktop/Ben/DAT/EXAM_OCR/backend/app/services/classification.py)  
-  Logic phân loại crop bằng ResNet18.
+## Quickstart
 
-- [backend/app/services/recognition.py](/home/bendo/Desktop/Ben/DAT/EXAM_OCR/backend/app/services/recognition.py)  
-  Logic pad crop, OCR bằng TrOCR và tính indent bằng DBSCAN.
+### Option A: Run locally
 
-- [backend/app/services/formatting.py](/home/bendo/Desktop/Ben/DAT/EXAM_OCR/backend/app/services/formatting.py)  
-  Ghép lại text/code hoàn chỉnh và vẽ visualization box.
-
-- [backend/app/services/ocr_pipeline.py](/home/bendo/Desktop/Ben/DAT/EXAM_OCR/backend/app/services/ocr_pipeline.py)  
-  Điều phối toàn bộ pipeline OCR.
-
-- [backend/app/services/file_manager.py](/home/bendo/Desktop/Ben/DAT/EXAM_OCR/backend/app/services/file_manager.py)  
-  Kiểm tra file upload và ghi file output.
-
-- [backend/app/services/grading.py](/home/bendo/Desktop/Ben/DAT/EXAM_OCR/backend/app/services/grading.py)  
-  Logic grading demo nội bộ.
-
-### Backend API
-
-- [backend/app/api/routes_health.py](/home/bendo/Desktop/Ben/DAT/EXAM_OCR/backend/app/api/routes_health.py)  
-  Endpoint health và ready.
-
-- [backend/app/api/routes_ocr.py](/home/bendo/Desktop/Ben/DAT/EXAM_OCR/backend/app/api/routes_ocr.py)  
-  Endpoint OCR prediction.
-
-- [backend/app/api/routes_grade.py](/home/bendo/Desktop/Ben/DAT/EXAM_OCR/backend/app/api/routes_grade.py)  
-  Endpoint grading nội bộ.
-
-### Frontend
-
-- [frontend/app.py](/home/bendo/Desktop/Ben/DAT/EXAM_OCR/frontend/app.py)  
-  Streamlit client gọi backend.
-
-### Deployment
-
-- [deployment/docker-compose.yml](/home/bendo/Desktop/Ben/DAT/EXAM_OCR/deployment/docker-compose.yml)  
-  Chạy frontend, backend và nginx.
-
-- [deployment/docker/Dockerfile.backend](/home/bendo/Desktop/Ben/DAT/EXAM_OCR/deployment/docker/Dockerfile.backend)  
-  Docker image cho backend.
-
-- [deployment/docker/Dockerfile.frontend](/home/bendo/Desktop/Ben/DAT/EXAM_OCR/deployment/docker/Dockerfile.frontend)  
-  Docker image cho frontend.
-
-## 6. API endpoints
-
-### `GET /health`
-
-Endpoint kiểm tra service còn sống hay không.
-
-Trả về:
-
-- trạng thái service
-- version
-
-### `GET /ready`
-
-Endpoint kiểm tra backend đã sẵn sàng xử lý chưa.
-
-Trả về:
-
-- model đã load chưa
-- device đang dùng
-- grading có bật không
-- lỗi load model nếu có
-
-### `POST /api/ocr/predict`
-
-Nhận ảnh upload và trả về:
-
-- `success`
-- `filename`
-- `recognized_text`
-- `boxes`
-- `processing_time`
-- `visualization_path`
-- `request_id`
-- `error`
-
-### `POST /api/grade/run`
-
-Endpoint grading tùy chọn.
-
-Lưu ý:
-
-- đang tắt mặc định
-- chỉ nên dùng nội bộ
-- chưa an toàn để public
-
-## 7. Cấu hình bằng `.env`
-
-Backend đọc config từ:
-
-- [`.env`](/home/bendo/Desktop/Ben/DAT/EXAM_OCR/.env)
-
-Code đọc `.env` nằm ở:
-
-- [backend/app/core/config.py](/home/bendo/Desktop/Ben/DAT/EXAM_OCR/backend/app/core/config.py)
-
-Nguyên tắc:
-
-- giá trị trong `Settings` là giá trị mặc định
-- giá trị trong `.env` sẽ override giá trị mặc định đó
-
-Biến môi trường quan trọng:
-
-- `YOLO_MODEL_PATH`
-- `RESNET_MODEL_PATH`
-- `TROCR_MODEL_PATH`
-- `DEVICE`
-- `MAX_UPLOAD_MB`
-- `ENABLE_GRADING`
-- `LOG_LEVEL`
-
-## 8. Chiến lược tổ chức model
-
-### Cấu trúc model local khuyến nghị
-
-Nên giữ model ở cấu trúc sau:
-
-```text
-EXAM_OCR/
-└── backend/
-    └── models/
-        ├── YOLO/
-        │   └── best_phase2_143.pt
-        ├── Resnet/
-        │   └── resnet18_text_cls.pth
-        └── trocr_handwritten_decoder_only_best_S1/
-            ├── config.json
-            ├── generation_config.json
-            ├── preprocessor_config.json
-            ├── tokenizer files
-            └── model weight files
-```
-
-Lý do:
-
-- path ổn định
-- backend dễ tìm model
-- ít nhầm lẫn giữa local và Docker
-- repo dễ quản lý hơn
-
-### `.env` chuẩn khi chạy local
-
-```env
-YOLO_MODEL_PATH=backend/models/YOLO/best_phase2_143.pt
-RESNET_MODEL_PATH=backend/models/Resnet/resnet18_text_cls.pth
-TROCR_MODEL_PATH=backend/models/trocr_handwritten_decoder_only_best_S1
-```
-
-Đây là cấu hình local tiêu chuẩn nếu model nằm trong project.
-
-## 9. Kế hoạch để model trên Google Drive
-
-Bạn có nói rằng folder model sẽ được upload lên Drive sau này. Đây là cách làm hợp lý vì model thường nặng và không nên đưa vào Git.
-
-Khuyến nghị:
-
-### Trong repository Git
-
-Chỉ nên giữ:
-
-- source code
-- Docker files
-- `.env.example`
-- scripts
-- README
-
-Không nên giữ:
-
-- model weights lớn
-- file upload tạm
-- file output sinh ra
-
-### Trên Google Drive
-
-Nên upload theo cấu trúc:
-
-```text
-models/
-├── YOLO/
-│   └── best_phase2_143.pt
-├── Resnet/
-│   └── resnet18_text_cls.pth
-└── trocr_handwritten_decoder_only_best_S1/
-    └── ...
-```
-
-Sau khi tải hoặc sync từ Drive về, đặt lại vào:
-
-```text
-EXAM_OCR/backend/models/
-```
-
-Như vậy project sẽ chạy lại mà không cần đổi code.
-
-### Cách setup chuẩn
-
-Workflow nên là:
-
-1. Clone repo code về máy.
-2. Tải model từ Google Drive. Link: https://drive.google.com/file/d/19j3cDWgtMi67V5e9WAexe4pKAXuD7PNa/view?usp=sharing
-3. Khôi phục folder model vào `backend/models/`.
-4. Giữ `.env` theo chuẩn local:
-
-```env
-YOLO_MODEL_PATH=backend/models/YOLO/best_phase2_143.pt
-RESNET_MODEL_PATH=backend/models/Resnet/resnet18_text_cls.pth
-TROCR_MODEL_PATH=backend/models/trocr_handwritten_decoder_only_best_S1
-```
-
-5. Chạy backend và frontend như bình thường.
-
-Đây là cách sạch nhất cho một dự án sinh viên có model nặng nhưng vẫn cần tái lập môi trường dễ dàng.
-
-## 10. Chính sách `.gitignore` nên dùng
-
-Nên ignore:
-
-- `backend/models/`
-- `backend/runtime/`
-- `.env`
-- virtualenv
-- file cache Python
-
-Nếu muốn giữ cấu trúc thư mục trống trong Git, có thể:
-
-- ignore file weight
-- giữ `.gitkeep`
-- mô tả tên model cần có trong README này
-
-## 11. Cách chạy local
-
-### Chạy backend
+Backend:
 
 ```bash
-cd /home/bendo/Desktop/Ben/DAT/EXAM_OCR/backend
-source .venv/bin/activate
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+cd backend
+uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
-### Chạy frontend
-
-Mở terminal khác:
+Worker:
 
 ```bash
-cd /home/bendo/Desktop/Ben/DAT/EXAM_OCR/frontend
+cd backend
+celery -A app.celery_app:celery_app worker --loglevel=info
+```
+
+Legacy Streamlit demo:
+
+```bash
+cd frontend
 streamlit run app.py --server.port 8501
 ```
 
-Mở trình duyệt:
-
-- frontend: `http://localhost:8501`
-- backend health: `http://localhost:8000/health`
-- backend ready: `http://localhost:8000/ready`
-
-## 12. Cách chạy bằng Docker
-
-Từ thư mục:
+### Option B: Run with Docker Compose
 
 ```bash
-cd /home/bendo/Desktop/Ben/DAT/EXAM_OCR/deployment
-```
-
-Chạy:
-
-```bash
-cp ../.env.example .env
+cd deployment
 docker compose up --build
 ```
 
-Lưu ý:
+## Configuration
 
-Khi chạy Docker, path model trong container khác với path local. Khi đó:
+The project reads deployment-oriented settings from:
 
-- `*_HOST` là path model phía máy host
-- `*_PATH` là path model phía trong container
+- [`deployment/.env`](deployment/.env)
 
-Nếu muốn Docker dùng đúng `backend/models/`, hãy chỉnh mount trong compose cho đồng nhất với cấu trúc này.
+Important variables include:
 
-## 13. Rủi ro và giới hạn hiện tại
+- `DEVICE`
+- `OCR_INFERENCE_MODE`
+- `REMOTE_OCR_URL`
+- `ENABLE_GRADING`
+- `OPENAI_API_KEY`
+- `OCR_JOB_BACKEND`
+- `REDIS_URL`
+- `YOLO_MODEL_PATH`
+- `RESNET_MODEL_PATH`
+- `TROCR_MODEL_PATH`
 
-### Grading
+Do not commit real secrets. Use local or deployment-specific environment files.
 
-Grading chưa an toàn cho production.
+## Benchmarking and Evaluation
 
-Lý do:
+Useful files and scripts:
 
-- vẫn liên quan tới thực thi code
-- chưa có sandbox thật
-- chỉ nên dùng nội bộ hoặc demo
+- [`BENCHMARK_RESULTS.md`](BENCHMARK_RESULTS.md)
+- [`evaluation_results_openvino`](evaluation_results_openvino)
+- [`scripts/benchmark_ocr.py`](scripts/benchmark_ocr.py)
+- [`scripts/infer_openvino_models.py`](scripts/infer_openvino_models.py)
 
-### OCR
+These cover:
 
-Pipeline OCR đã được giữ gần bản gốc, nhưng nếu muốn triển khai thực tế hơn vẫn có thể cần:
+- full-pipeline timing
+- model-level inference timing
+- PyTorch vs OpenVINO comparison
+- CPU vs GPU runtime comparison
+- CER / EM evaluation for TrOCR
+- test-set accuracy for ResNet
 
-- error handling mạnh hơn
-- cleanup strategy tốt hơn cho file runtime
-- request tracing tốt hơn
-- kiểm soát tài nguyên inference tốt hơn
+## Limitations
 
-## 14. Tóm tắt migration
+- handwritten code remains highly variable
+- exact-match performance is still challenging
+- ONNX GPU paths were explored but were less reliable than the final CUDA FP16 route
+- grading is still best treated as teacher-in-the-loop rather than fully autonomous
 
-Những gì đã thay đổi so với app Streamlit monolithic:
+## Roadmap
 
-- Streamlit trở thành frontend-only
-- FastAPI trở thành backend inference layer
-- model loading được đưa vào backend startup
-- OCR logic được tách thành service modules
-- hard-coded path được chuyển sang env-based config
-- grading được tách riêng và tắt mặc định
-- thêm Docker files để dễ deploy
+- improve exact-match rate for handwritten code recognition
+- strengthen symbol-level robustness for code punctuation
+- cleanly package the best CPU-only and hybrid GPU deployment modes
+- improve README visuals and public demo assets
+- continue polishing teacher review and AI grading flows
 
-Những gì vẫn giữ nguyên về mặt logic:
+## Citation
 
-- detect bằng YOLO
-- classify crop bằng ResNet
-- OCR bằng TrOCR
-- dựng indent
-- ý tưởng grading tùy chọn
+If you build on this repository, please cite the project report/paper once finalized.
 
-## 15. Thiết lập chuẩn được khuyến nghị về sau
+## Acknowledgments
 
-Để dự án gọn và dễ dùng lâu dài, nên theo workflow này:
-
-1. Git chỉ giữ code.
-2. Google Drive giữ model weights.
-3. Sau khi clone repo, restore model vào `backend/models/`.
-4. Giữ `.env` theo path local tương đối:
-
-```env
-YOLO_MODEL_PATH=backend/models/YOLO/best_phase2_143.pt
-RESNET_MODEL_PATH=backend/models/Resnet/resnet18_text_cls.pth
-TROCR_MODEL_PATH=backend/models/trocr_handwritten_decoder_only_best_S1
-```
-
-5. Chạy backend local hoặc Docker tùy môi trường.
-
-Lợi ích của cách này:
-
-- dễ tái lập project
-- dễ onboarding người khác
-- ít lỗi path
-- dễ quản lý source code và model tách biệt
+This repository was developed as part of an academic project on handwritten code recognition, OCR optimization, and deployable AI system design.
